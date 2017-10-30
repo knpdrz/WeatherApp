@@ -1,4 +1,7 @@
 <resources>
     <string name="app_name">M_fragmentsList</string>
     <string name="refresh">refresh</string>
+    <string name="ok">OK</string>
+    <string name="remove">Remove</string>
+    <string name="title_activity_city_details">CityDetailsActivity</string>
 </resources>
