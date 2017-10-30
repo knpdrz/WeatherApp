@@ -28,6 +28,8 @@ public class MainActivity extends AppCompatActivity {
     WeatherService mWeatherService;
     boolean mBound = false;
     String cityName = "Aarhus,dk";
+    private String _cityName;
+    private Button _addCityBtn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,6 +41,14 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 mWeatherService.getCurrentWeather(cityName);
+            }
+        });
+
+        _addCityBtn = findViewById(R.id.addCityBtn);
+        _addCityBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
             }
         });
 

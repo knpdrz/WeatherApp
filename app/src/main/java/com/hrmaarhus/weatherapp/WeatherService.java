@@ -2,6 +2,7 @@ package com.hrmaarhus.weatherapp;
 
 import android.app.IntentService;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
@@ -25,6 +26,7 @@ import static com.hrmaarhus.weatherapp.utils.Common.WEATHER_CITY_EVENT;
 public class WeatherService extends IntentService {
     //creating a binder given to clients
     private final IBinder mBinder = new LocalBinder();
+    private SharedPreferences _sharedPref;
 
     String API_KEY = "b53c8005699265cde5eec630288d21dc";
     //String CITY_ID = "2624652";
@@ -72,6 +74,14 @@ public class WeatherService extends IntentService {
                 handler.postDelayed(this, WEATHER_CHECK_DELAY);
             }
         }, WEATHER_CHECK_DELAY);
+    }
+
+    public void AddCity(String city){
+
+    }
+
+    public void RemoveCity(String city){
+
     }
 
 
