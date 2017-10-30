@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">WeatherApp</string>
+    <string name="app_name">M_fragmentsList</string>
+    <string name="refresh">refresh</string>
 </resources>
