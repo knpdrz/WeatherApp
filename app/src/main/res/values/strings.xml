@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">WeatherApp</string>
+    <string name="app_name">Weather App 01</string>
     <string name="refresh">refresh</string>
     <string name="ok">OK</string>
     <string name="remove">Remove</string>
