@@ -27,7 +27,7 @@ public class MainActivity extends AppCompatActivity {
 
     WeatherService mWeatherService;
     boolean mBound = false;
-    String cityName = "Aarhus";
+    String cityName = "Aarhus,dk";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
         startService(weatherIntent);
 
         //binding to WeatherService
-        weatherIntent.putExtra(CITY_NAME_EXTRA,"Aarhus");
+        weatherIntent.putExtra(CITY_NAME_EXTRA,cityName);
         bindService(weatherIntent, mConnection, Context.BIND_AUTO_CREATE);
 
 
