@@ -1,11 +1,13 @@
 package com.hrmaarhus.weatherapp;
 
 import android.app.IntentService;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.widget.Toast;
@@ -16,7 +18,14 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.hrmaarhus.weatherapp.utils.WeatherParser;
+
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 import static com.hrmaarhus.weatherapp.utils.Common.CITY_NAME_EXTRA;
 import static com.hrmaarhus.weatherapp.utils.Common.CITY_WEATHER_DATA;
@@ -26,7 +35,7 @@ import static com.hrmaarhus.weatherapp.utils.Common.WEATHER_CITY_EVENT;
 public class WeatherService extends IntentService {
     //creating a binder given to clients
     private final IBinder mBinder = new LocalBinder();
-    private SharedPreferences _sharedPref;
+    private ArrayList<String> _cityList;
 
     String API_KEY = "b53c8005699265cde5eec630288d21dc";
     //String CITY_ID = "2624652";
@@ -49,6 +58,8 @@ public class WeatherService extends IntentService {
     public void onCreate() {
         super.onCreate();
         Log.d("MR","WeatherService: oncreate");
+        _cityList = new ArrayList<String>();
+        GetCityListFromDb();
     }
 
     @Override
@@ -56,8 +67,6 @@ public class WeatherService extends IntentService {
         Log.d("MR","WeatherService: onstartcommand");
         return super.onStartCommand(intent, flags, startId);
     }
-
-
 
     @Override
     protected void onHandleIntent(Intent intent) {
@@ -76,14 +85,53 @@ public class WeatherService extends IntentService {
         }, WEATHER_CHECK_DELAY);
     }
 
+    //Add new city to the citylist.
     public void AddCity(String city){
-
+        if (_cityList.contains(city)){
+            return;
+        }
+        _cityList.add(city);
     }
 
+    //Remove city from citylist
     public void RemoveCity(String city){
-
+        if (_cityList.contains(city)){
+            _cityList.remove(city);
+        }
     }
 
+    //Save citylist to Db.
+    //The list is formated to a jsonstring and saved as a string.
+    private void SaveCityListToDb(){
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        Gson gson = new Gson();
+
+        String cityListAsJson = gson.toJson(_cityList);
+
+        editor.putString("citylist",cityListAsJson);
+        editor.commit();
+    }
+
+    //Gets the citylist from the db if it exists.
+    //The string collected from the db, is set as a arraylist.
+    private void GetCityListFromDb(){
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+
+        if (sharedPreferences.contains("citylist")){
+            String jsonCityList = sharedPreferences.getString("citylist", "");
+            Gson gson = new Gson();
+            Type type = new TypeToken<ArrayList<String>>(){}.getType();
+            _cityList = gson.fromJson(jsonCityList, type);
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        SaveCityListToDb();
+    }
 
     //----------------handling binding
     public class LocalBinder extends Binder {

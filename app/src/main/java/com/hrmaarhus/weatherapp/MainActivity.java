@@ -13,6 +13,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -30,11 +31,13 @@ public class MainActivity extends AppCompatActivity {
     String cityName = "Aarhus,dk";
     private String _cityName;
     private Button _addCityBtn;
+    private EditText _newCity;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        _newCity = (EditText) findViewById(R.id.newCityText);
 
         refreshBtn = (Button)findViewById(R.id.refreshBtn);
         refreshBtn.setOnClickListener(new View.OnClickListener() {
@@ -48,7 +51,9 @@ public class MainActivity extends AppCompatActivity {
         _addCityBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                String newCity = _newCity.getText().toString();
 
+                mWeatherService.AddCity(newCity);
             }
         });
 
