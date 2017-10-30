@@ -29,14 +29,15 @@ public class WeatherService extends IntentService {
     private SharedPreferences _sharedPref;
 
     String API_KEY = "b53c8005699265cde5eec630288d21dc";
-    String CITY_ID = "2624652";
+    //String CITY_ID = "2624652";
     String URL = "http://api.openweathermap.org/data/2.5/weather?";
+    String CITY_KEY = "Aarhus,dk";
 
-    String aarhusUrl = URL + "id=" + CITY_ID + "&appid=" + API_KEY;
+    String aarhusUrl = URL + "q=" + CITY_KEY + "&appid=" + API_KEY;
 
     //api key b53c8005699265cde5eec630288d21dc
     //aarhus id 2624652
-    //url http://api.openweathermap.org/data/2.5/weather?id=2624652&appid=b53c8005699265cde5eec630288d21dc
+    //url http://api.openweathermap.org/data/2.5/weather?q=Aarhus,dk&appid=b53c8005699265cde5eec630288d21dc
 
     public WeatherService(){
         super("WeatherService");
@@ -60,7 +61,10 @@ public class WeatherService extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        final String cityName = intent.getStringExtra(CITY_NAME_EXTRA);
+        //TODO do something about the city name
+        //as after the first one we're getting empty intents
+        //final String cityName = intent.getStringExtra(CITY_NAME_EXTRA);
+        final String cityName = CITY_KEY;
         getCurrentWeather(cityName);
         final Handler handler = new Handler();
         handler.postDelayed(new Runnable() {
@@ -95,9 +99,9 @@ public class WeatherService extends IntentService {
     }
 
     //method available to clients
-    public void getCurrentWeather(final String cityName){
-        //todo add differentiation between cities
-        String cityUrl = aarhusUrl;
+    public void getCurrentWeather(final String cityString){
+        String cityUrl = URL + "q=" + cityString + "&appid=" + API_KEY;
+        Log.d("MR","req to: " + cityUrl);
 
         //instantiate the RequestQueue
         RequestQueue queue = Volley.newRequestQueue(this);
@@ -107,8 +111,6 @@ public class WeatherService extends IntentService {
                 cityUrl, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
-                CityWeatherData cw;
-
                 CityWeatherData cityWeatherData = WeatherParser.parseCityWeatherJsonWithGson(response);
                 if(cityWeatherData != null){
                     sendWeatherUpdate(cityWeatherData);
