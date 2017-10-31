@@ -27,4 +27,28 @@ public class CityWeatherData implements Serializable {
         this.weatherDescription = weatherDescription;
         this.timestamp = timestamp;
     }
+
+    public String getCityName() {
+        return cityName;
+    }
+
+    public Double getHumidity() {
+        return humidity;
+    }
+
+    public Double getTemperature() {
+        return temperature;
+    }
+
+    public String getIconType() {
+        return iconType;
+    }
+
+    public String getWeatherDescription() {
+        return weatherDescription;
+    }
+
+    public String getTimestamp() {
+        return timestamp;
+    }
 }

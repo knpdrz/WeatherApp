@@ -6,12 +6,6 @@
     android:layout_height="match_parent"
     tools:context="com.hrmaarhus.weatherapp.MainActivity"
     android:orientation="vertical">
-   <!-- <fragment
-        android:layout_width="match_parent"
-        android:layout_height="450dp"
-        android:name="com.knpdrz.m_fragmentslist.RecipeFragment"
-        android:id="@+id/listFragment"/>
--->
 
     <Button
         android:id="@+id/refreshBtn"
@@ -35,17 +29,26 @@
         android:layout_height="wrap_content"
         android:id="@+id/descriptionTextView" />
 
- <EditText
-     android:id="@+id/newCityText"
-     android:layout_width="match_parent"
-     android:layout_height="wrap_content"
-     android:ems="10"
-     android:inputType="textPersonName"
-     android:text="Name" />
+     <EditText
+        android:id="@+id/newCityText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:inputType="textPersonName"
+        android:text="Name" />
 
- <Button
-     android:id="@+id/addCityBtn"
-     android:layout_width="match_parent"
-     android:layout_height="wrap_content"
-     android:text="Add" />
+     <Button
+        android:id="@+id/addCityBtn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Add" />
+
+    <ListView
+        android:layout_width="wrap_content"
+        android:layout_height="200dp"
+        android:id="@+id/listView"
+        android:layout_centerHorizontal="true"
+    />
+
+
 </LinearLayout>

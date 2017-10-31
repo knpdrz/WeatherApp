@@ -1,7 +1,6 @@
 package com.hrmaarhus.weatherapp;
 
 import android.app.IntentService;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Binder;
@@ -24,13 +23,11 @@ import com.hrmaarhus.weatherapp.utils.WeatherParser;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
 
-import static com.hrmaarhus.weatherapp.utils.Common.CITY_NAME_EXTRA;
-import static com.hrmaarhus.weatherapp.utils.Common.CITY_WEATHER_DATA;
-import static com.hrmaarhus.weatherapp.utils.Common.WEATHER_CHECK_DELAY;
-import static com.hrmaarhus.weatherapp.utils.Common.WEATHER_CITY_EVENT;
+import static com.hrmaarhus.weatherapp.utils.Globals.CITY_WEATHER_DATA;
+import static com.hrmaarhus.weatherapp.utils.Globals.LOG_TAG;
+import static com.hrmaarhus.weatherapp.utils.Globals.WEATHER_CHECK_DELAY;
+import static com.hrmaarhus.weatherapp.utils.Globals.WEATHER_CITY_EVENT;
 
 public class WeatherService extends IntentService {
     //creating a binder given to clients
@@ -91,6 +88,9 @@ public class WeatherService extends IntentService {
             return;
         }
         _cityList.add(city);
+
+        //todo for debugging only
+        printCityList();
     }
 
     //Remove city from citylist
@@ -126,6 +126,15 @@ public class WeatherService extends IntentService {
         }
     }
 
+    //todo for debugging only
+    private void printCityList(){
+        if(_cityList != null){
+            for(String city :_cityList){
+                Log.d(LOG_TAG, city);
+            }
+        }
+    }
+
     @Override
     public void onDestroy() {
         super.onDestroy();
@@ -147,9 +156,12 @@ public class WeatherService extends IntentService {
     }
 
     //method available to clients
+    //sending http request with volley to weather api
+    //calling sendWeatherUpdate(parsed weather data) when expected response is received
+    //otherwise creating error report Toast
     public void getCurrentWeather(final String cityString){
         String cityUrl = URL + "q=" + cityString + "&appid=" + API_KEY;
-        Log.d("MR","req to: " + cityUrl);
+        Log.d(LOG_TAG,"sending weather request to: " + cityUrl);
 
         //instantiate the RequestQueue
         RequestQueue queue = Volley.newRequestQueue(this);
@@ -163,6 +175,7 @@ public class WeatherService extends IntentService {
                 if(cityWeatherData != null){
                     sendWeatherUpdate(cityWeatherData);
                 }else{
+                    //todo should this toast be shown?
                     Toast.makeText(WeatherService.this, "problem with parsing gson (api problem maybe?)", Toast.LENGTH_SHORT).show();
                 }
 
@@ -179,13 +192,19 @@ public class WeatherService extends IntentService {
         //add request to the RequestQueue
         queue.add(stringRequest);
     }
-    
+
+    //sends a local broadcast with current weather data of one city
     private void sendWeatherUpdate(CityWeatherData cityWeatherData){
-        //Log.d("MR","WeatherService sendWeatherUpdate " + weatherString);
         //creating intent to send in a local broadcast
         Intent weatherIntent = new Intent(WEATHER_CITY_EVENT);
         weatherIntent.putExtra(CITY_WEATHER_DATA, cityWeatherData);
 
         LocalBroadcastManager.getInstance(this).sendBroadcast(weatherIntent);
     }
+
+    public void getAllCitiesWeather(){
+
+    }
+
+
 }
