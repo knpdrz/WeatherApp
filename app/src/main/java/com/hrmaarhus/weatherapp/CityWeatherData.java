@@ -16,7 +16,12 @@ public class CityWeatherData implements Serializable {
     public String timestamp;
 
     public CityWeatherData(){
-
+        this.cityName = "";
+        this.humidity = 0.0;
+        this.temperature = 0.0;
+        this.iconType = "";
+        this.weatherDescription = "";
+        this.timestamp = "";
     }
 
     public CityWeatherData(String cityName, Double humidity, Double temperature, String iconType, String weatherDescription, String timestamp) {

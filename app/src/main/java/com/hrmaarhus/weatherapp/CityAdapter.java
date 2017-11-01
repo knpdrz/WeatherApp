@@ -1,6 +1,7 @@
 package com.hrmaarhus.weatherapp;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,6 +11,8 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 
+import static com.hrmaarhus.weatherapp.utils.Globals.LOG_TAG;
+
 
 public class CityAdapter extends BaseAdapter {
     Context context;
@@ -18,6 +21,16 @@ public class CityAdapter extends BaseAdapter {
 
     public CityAdapter(Context c, ArrayList<CityWeatherData> cities){
         this.context = c;
+        this.cities = cities;
+    }
+
+    @Override
+    public void notifyDataSetChanged() {
+        super.notifyDataSetChanged();
+        Log.d(LOG_TAG, "CityAdapter: notifyDataSetChanged list size " + getCount());
+    }
+
+    public void setData(ArrayList<CityWeatherData> cities){
         this.cities = cities;
     }
 
