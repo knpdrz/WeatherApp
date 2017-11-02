@@ -199,7 +199,6 @@ public class WeatherService extends IntentService {
             _cityList = new ArrayList<String>();
         }
         Log.d(LOG_TAG,"WeatherService GetCityListFromDb getting list with " + _cityList.size() + " cities");
-
     }
 
     //todo for debugging only
@@ -274,6 +273,9 @@ public class WeatherService extends IntentService {
                 Log.d(LOG_TAG,"err : "+error.getLocalizedMessage());
                 Toast.makeText(WeatherService.this,
                         "error while getting weather", Toast.LENGTH_SHORT).show();
+                // todo add numberOfRequestsToMake--;
+                // if(numberOfRequestsToMake == 0){
+                // because we want to add error msg to cityweatherdata if there is an error with it
             }
         });
 
