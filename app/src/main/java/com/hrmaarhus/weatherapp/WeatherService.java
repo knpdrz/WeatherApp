@@ -190,7 +190,6 @@ public class WeatherService extends IntentService {
             _cityList = new ArrayList<String>();
         }
         Log.d(LOG_TAG,"WeatherService GetCityListFromDb getting list with " + _cityList.size() + " cities");
-
     }
 
     //todo for debugging only
