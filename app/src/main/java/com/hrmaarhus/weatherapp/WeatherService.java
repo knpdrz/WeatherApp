@@ -1,12 +1,18 @@
 package com.hrmaarhus.weatherapp;
 
 import android.app.IntentService;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Binder;
+import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
+import android.support.annotation.RequiresApi;
+import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.widget.Toast;
@@ -20,11 +26,14 @@ import com.android.volley.toolbox.Volley;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.hrmaarhus.weatherapp.model.CityWeather;
+import com.hrmaarhus.weatherapp.utils.NotificationHelper;
 import com.hrmaarhus.weatherapp.utils.WeatherParser;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Type;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -39,6 +48,7 @@ public class WeatherService extends IntentService {
     //creating a binder given to clients
     private final IBinder mBinder = new LocalBinder();
     private ArrayList<String> _cityList;
+    NotificationHelper notificationHelper;
 
     private String API_KEY = "b53c8005699265cde5eec630288d21dc";
     private String URL = "http://api.openweathermap.org/data/2.5/weather?";
@@ -72,7 +82,6 @@ public class WeatherService extends IntentService {
         _cityList = new ArrayList<String>();
 
         citiesWeatherMap = new HashMap<String, CityWeatherData>();
-
 
         //todo maybe better return that list in GetCityListFromDb() function?
         GetCityListFromDb();
@@ -237,6 +246,7 @@ public class WeatherService extends IntentService {
         //request a string response from the url
         StringRequest stringRequest = new StringRequest(Request.Method.GET,
                 cityUrl, new Response.Listener<String>() {
+            @RequiresApi(api = Build.VERSION_CODES.O)
             @Override
             public void onResponse(String response) {
                 //create cityWeatherData object as a result from parsing
@@ -325,10 +335,11 @@ public class WeatherService extends IntentService {
 
     //notifies 'listeners' on new weather data availability
     //in a local broadcast
+    @RequiresApi(api = Build.VERSION_CODES.O)
     private void notifyOnWeatherUpdate(){
         Log.d(LOG_TAG,"WeatherService: notifyOnWeatherUpdate() sending weather update broadcast");
+        Notify();
         Intent updateIntent = new Intent(NEW_WEATHER_EVENT);
-
         LocalBroadcastManager.getInstance(this).sendBroadcast(updateIntent);
     }
 
@@ -343,6 +354,16 @@ public class WeatherService extends IntentService {
             Log.d(LOG_TAG,"::: "+cityWeatherData.getCityName());
         }
         return cityWeatherDataArrayList;
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void Notify(){
+        Date date = new Date();
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+        String currentdate = sdf.format(date);
+        notificationHelper = new NotificationHelper(this);
+        Notification.Builder builder = notificationHelper.getChannelNotification(getResources().getString(R.string.app_name),  "Last checked weather at: " + currentdate);
+        notificationHelper.getManager().notify(1991, builder.build());
     }
 
     //todo CityWeatherData getCurrentWeather(String cityName)

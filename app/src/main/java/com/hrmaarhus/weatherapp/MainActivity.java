@@ -1,13 +1,19 @@
 package com.hrmaarhus.weatherapp;
 
+import android.app.Notification;
+import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.os.Build;
+import android.os.Build.VERSION_CODES;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.support.annotation.RequiresApi;
+import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -18,6 +24,8 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.hrmaarhus.weatherapp.utils.NotificationHelper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,6 +47,7 @@ public class MainActivity extends AppCompatActivity{
     private String _cityName;
     private Button _addCityBtn;
     private EditText _newCity;
+    NotificationHelper notificationHelper;
 
     CityAdapter adapter;
     ListView listView;
@@ -57,6 +66,8 @@ public class MainActivity extends AppCompatActivity{
             public void onClick(View view) {
                 //mWeatherService.getCurrentWeather(cityName);
             }
+
+
         });
 
         _addCityBtn = findViewById(R.id.addCityBtn);
@@ -211,5 +222,4 @@ public class MainActivity extends AppCompatActivity{
         adapter.notifyDataSetChanged();
         listView.invalidateViews();
     }
-
 }

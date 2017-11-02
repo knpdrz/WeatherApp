@@ -21,4 +21,7 @@ public class Globals {
 
     public static final String DB_LIST_KEY = "cities-list";
 
+    public static final String NOTIFICATION_CHANNEL_ID = "HRM_WEATHER_ID";
+    public static final String NOTIFICATION_CHANNEL_NAME = "HRM_WEATHER_APP";
+
 }
