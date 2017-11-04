@@ -17,7 +17,7 @@ import static com.hrmaarhus.weatherapp.utils.Globals.NOTIFICATION_CHANNEL_NAME;
  * Created by rjkey on 02-11-2017.
  */
 
-//Code is heavly inspired by this youtube video https://www.youtube.com/watch?v=CVI4CfdtbkA
+//Code is heavily inspired by this youtube video https://www.youtube.com/watch?v=CVI4CfdtbkA
 public class NotificationHelper extends ContextWrapper {
 
     private NotificationManager _manager;

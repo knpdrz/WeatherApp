@@ -25,29 +25,34 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.hrmaarhus.weatherapp.model.Main;
 import com.hrmaarhus.weatherapp.utils.NotificationHelper;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static com.hrmaarhus.weatherapp.utils.Globals.CELSIUS_UNICODE;
+import static com.hrmaarhus.weatherapp.utils.Globals.CITY_DETAILS_REQ_CODE;
+import static com.hrmaarhus.weatherapp.utils.Globals.CITY_NAME;
 import static com.hrmaarhus.weatherapp.utils.Globals.CITY_NAME_EXTRA;
+import static com.hrmaarhus.weatherapp.utils.Globals.CITY_NAME_TO_BE_REMOVED;
+import static com.hrmaarhus.weatherapp.utils.Globals.CITY_WAS_REMOVED;
 import static com.hrmaarhus.weatherapp.utils.Globals.CITY_WEATHER_DATA;
+import static com.hrmaarhus.weatherapp.utils.Globals.CWD_OBJECT;
 import static com.hrmaarhus.weatherapp.utils.Globals.LOG_TAG;
 import static com.hrmaarhus.weatherapp.utils.Globals.NEW_WEATHER_EVENT;
+import static com.hrmaarhus.weatherapp.utils.Globals.NEW_WEATHER_ONE_CITY_EVENT;
+import static com.hrmaarhus.weatherapp.utils.Globals.ONE_CITY_WEATHER_EXTRA;
 import static com.hrmaarhus.weatherapp.utils.Globals.WEATHER_CITY_EVENT;
 
 public class MainActivity extends AppCompatActivity{
     Button refreshBtn;
-    TextView cityNameTextView, tempTextView, humidityTextView, descriptionTextView;
 
     WeatherService mWeatherService;
     boolean mBound = false;
-    String cityName = "Aarhus,dk";
-    private String _cityName;
-    private Button _addCityBtn;
-    private EditText _newCity;
-    NotificationHelper notificationHelper;
+
+    private Button addCityBtn;
+    private EditText newCityEditText;
 
     CityAdapter adapter;
     ListView listView;
@@ -58,73 +63,59 @@ public class MainActivity extends AppCompatActivity{
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        _newCity = (EditText) findViewById(R.id.newCityText);
+        newCityEditText = (EditText) findViewById(R.id.newCityText);
 
         refreshBtn = (Button)findViewById(R.id.refreshBtn);
         refreshBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //mWeatherService.getCurrentWeather(cityName);
+                mWeatherService.requestAllCitiesWeatherUpdate();
             }
-
-
         });
 
-        _addCityBtn = findViewById(R.id.addCityBtn);
-        _addCityBtn.setOnClickListener(new View.OnClickListener() {
+        addCityBtn = findViewById(R.id.addCityBtn);
+        addCityBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                String newCity = _newCity.getText().toString();
+                String newCity = newCityEditText.getText().toString();
 
-                mWeatherService.AddCity(newCity);
+                mWeatherService.addCity(newCity);
+                newCityEditText.setText("");
             }
         });
-
-        cityNameTextView = (TextView)findViewById(R.id.cityNameTextView);
-        tempTextView = (TextView)findViewById(R.id.tempTextView);
-        humidityTextView = (TextView)findViewById(R.id.humidityTextView);
-        descriptionTextView = (TextView)findViewById(R.id.descriptionTextView);
 
         //starting the weather service
         Intent weatherIntent = new Intent(getApplicationContext(), WeatherService.class);
         startService(weatherIntent);
 
-        //binding to WeatherService
-        weatherIntent.putExtra(CITY_NAME_EXTRA,cityName);
-        bindService(weatherIntent, mConnection, Context.BIND_AUTO_CREATE);
+        if(!mBound){
+            //binding to WeatherService
+            bindService(weatherIntent, mConnection, Context.BIND_AUTO_CREATE);
+
+        }
 
 
         //creating local broadcast receiver
         //to be able to get data from the weather service
         //listen for 'new data available' broadcast
+        //and 'new weather for one city available' broadcast
         LocalBroadcastManager.getInstance(this)
                 .registerReceiver(mWeatherReceiver,
                         new IntentFilter(NEW_WEATHER_EVENT));
 
-        //TODO will be removed after listview shows up
-        //before broadcast with current weather is received, display placeholder
-        cityNameTextView.setText("waiting for the service");
+        LocalBroadcastManager.getInstance(this)
+                .registerReceiver(mWeatherReceiver,
+                        new IntentFilter(NEW_WEATHER_ONE_CITY_EVENT));
+
+
 
         //setting cities list that will be displayed in the list view
         citiesList = new ArrayList<CityWeatherData>();
-
-        //todo dummy data to be removed
-        citiesList.add(new CityWeatherData("Gdansk",12.0,44.0,"e1","sun shiiinin","12:23:12"));
-        citiesList.add(new CityWeatherData("Orneta",0.0,20.0,"n1","brzydko","12:23:12"));
-        citiesList.add(new CityWeatherData("Szczytno",50.0,14.0,"k1","ladnie","12:23:12"));
 
         //setting up the list view of cities
         prepareListView();
     }
 
-
-    //todo remove
-    public void displayCityWeatherData(CityWeatherData cityWeatherData){
-        cityNameTextView.setText("city: " + cityWeatherData.cityName);
-        humidityTextView.setText("humidity: " + cityWeatherData.humidity.toString());
-        tempTextView.setText("temperature: " + cityWeatherData.temperature.toString() + CELSIUS_UNICODE);
-        descriptionTextView.setText("description: " + cityWeatherData.weatherDescription);
-    }
 
     //---------------------------------------------broadcast receiver
     private BroadcastReceiver mWeatherReceiver = new BroadcastReceiver() {
@@ -142,13 +133,17 @@ public class MainActivity extends AppCompatActivity{
                 ArrayList<CityWeatherData> cityWeatherDataArrayList =
                         (ArrayList<CityWeatherData>)mWeatherService.getAllCitiesWeather();
                 updateCitiesWeatherListView(cityWeatherDataArrayList);
+            }else if(intent.getAction().equals(NEW_WEATHER_ONE_CITY_EVENT)){
+                //broadcast contains updated weather city data for one city
+                //add that data to the list view
+                String cityString = intent.getStringExtra(ONE_CITY_WEATHER_EXTRA);
+                Log.d(LOG_TAG,"MainActivity: received one city weather data for "+cityString);
+
+                if(cityString != null){
+                    CityWeatherData cityWeatherData = mWeatherService.getCurrentWeather(cityString);
+                    addCityToListView(cityWeatherData);
+                }
             }
-
-
-            /*CityWeatherData cityWeatherData = (CityWeatherData)intent
-                    .getSerializableExtra(CITY_WEATHER_DATA);
-
-            displayCityWeatherData(cityWeatherData);*/
         }
     };
 
@@ -178,14 +173,16 @@ public class MainActivity extends AppCompatActivity{
     protected void onPause() {
         Log.d(LOG_TAG, "MainActivity unbinding from the service");
         //unbinding from weather service
-        if(mConnection != null){
+        /*if(mConnection != null){
             unbindService(mConnection);
-        }
+        }*/
         super.onPause();
 
     }
 
     //---------------------------------------------------list view management
+    //setting up ListView, that will display contents of citiesList
+    //clicking on a city item results in opening details for that city
     private void prepareListView(){
         adapter = new CityAdapter(this, citiesList);
         listView = (ListView)findViewById(R.id.listView);
@@ -193,18 +190,17 @@ public class MainActivity extends AppCompatActivity{
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
-                //todo: go to details activity
-                Toast.makeText(getApplicationContext(),
-                        "you clicked on " + citiesList.get(position).getCityName(), Toast.LENGTH_SHORT).show();
-                /*
-                Intent startDemoIntent = new Intent();
-                startDemoIntent.putExtra("position", position);
-                String action = cityList.get(position).getDemoAction();
-                int demoResultCode = cityList.get(position).getResultCode();
-                if(action != null && !action.equals("")){
-                    startDemoIntent.setAction(action);
-                    startActivityForResult(startDemoIntent, demoResultCode);
-                }*/
+                String clickedCityString = citiesList.get(position).getCityName();
+                Log.d(LOG_TAG,"MainActivity: opening details activity for "+clickedCityString);
+                //get startup weather data for that activity
+                CityWeatherData cityWeatherData = mWeatherService.getCurrentWeather(clickedCityString);
+
+                Intent openCityDetailsIntent =
+                        new Intent(getApplicationContext(), CityDetailsActivity.class);
+                openCityDetailsIntent.putExtra(CITY_NAME, clickedCityString);
+                openCityDetailsIntent.putExtra(CWD_OBJECT, cityWeatherData);
+                startActivityForResult(openCityDetailsIntent, CITY_DETAILS_REQ_CODE);
+
             }
         });
     }
@@ -213,7 +209,7 @@ public class MainActivity extends AppCompatActivity{
     //and notify observers of adapter, so that list view refreshes
     private void updateCitiesWeatherListView(ArrayList<CityWeatherData> cityWeatherDataArrayList){
         //todo check for identity?
-        //Log.d(LOG_TAG, "MainActivity list received in broadcast with " + cityWeatherDataArrayList.size() + " elements");
+        Log.d(LOG_TAG, "MainActivity list received in broadcast with " + cityWeatherDataArrayList.size() + " elements");
         citiesList = cityWeatherDataArrayList;
 
         //todo not the best practice?
@@ -221,5 +217,37 @@ public class MainActivity extends AppCompatActivity{
 
         adapter.notifyDataSetChanged();
         listView.invalidateViews();
+    }
+
+    //adds one CityWeatherData object to the list view
+    private void addCityToListView(CityWeatherData cityWeatherData){
+        Log.d(LOG_TAG,"adding one city to list view");
+        citiesList.add(cityWeatherData);
+        adapter.setData(citiesList);
+
+        adapter.notifyDataSetChanged();
+        listView.invalidateViews();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if(requestCode == CITY_DETAILS_REQ_CODE){
+            Log.d(LOG_TAG, "MainActivityL came back from details activity with result code "+resultCode);
+            if(resultCode == RESULT_OK){
+                //user is returning from details activity
+                //check if user removed city they were viewing
+                //if user clicked 'ok' button, no extras were set, so default values stand
+                boolean removeCity = data.getBooleanExtra(CITY_WAS_REMOVED, false);
+                if(removeCity){
+                    //get the name of the city to be removed
+                    String cityToBeRemoved = data.getStringExtra(CITY_NAME_TO_BE_REMOVED);
+                    //remove city from the storage
+                    mWeatherService.removeCity(cityToBeRemoved);
+                    //and update the list view
+                    updateCitiesWeatherListView(
+                            (ArrayList<CityWeatherData>)mWeatherService.getAllCitiesWeather());
+                }
+            }
+        }
     }
 }
