@@ -1,6 +1,7 @@
 package com.hrmaarhus.weatherapp;
 
 import android.app.IntentService;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Binder;
@@ -19,8 +20,10 @@ import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+
 import com.hrmaarhus.weatherapp.model.CityWeather;
 import com.hrmaarhus.weatherapp.utils.WeatherParser;
+import com.hrmaarhus.weatherapp.utils.CheckNetworkConnection;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Type;
@@ -85,6 +88,10 @@ public class WeatherService extends IntentService {
 
     }
 
+    public Context getContext() {
+        return this;
+    }
+
     //creates cities weather map with keys from @param citiesWeatherList
     //and empty CityWeatherData object as second elem of pair
     private void createCitiesWeatherMap(ArrayList<String> citiesWeatherList,
@@ -119,11 +126,17 @@ public class WeatherService extends IntentService {
                 //previously:
                 //getCurrentWeather(CITY_KEY);
 
-                //updates weather in locally stored map of all cities and weather in them
-                updateWeatherCitiesMap(citiesWeatherMap);
+                if(CheckNetworkConnection.isDeviceConnected(getContext())) {
+                    //updates weather in locally stored map of all cities and weather in them
+                    updateWeatherCitiesMap(citiesWeatherMap);
 
-                handler.postDelayed(this, WEATHER_CHECK_DELAY);
-                Log.d(LOG_TAG,"---- "+ WEATHER_CHECK_DELAY + " milisecs gone, bg runner");
+                    handler.postDelayed(this, WEATHER_CHECK_DELAY);
+                    Log.d(LOG_TAG,"---- "+ WEATHER_CHECK_DELAY + " milisecs gone, bg runner");
+                }
+                else {
+                    //Notification about the connectivity
+                    Log.d(LOG_TAG,"The weather data was not updated since there was no internet connectivity");
+                }
 
             }
         }, 0);
@@ -335,6 +348,7 @@ public class WeatherService extends IntentService {
     //-----------------------------------functions available to clients, used for getting weather data
     //returns CityWeatherData objects from citiesWeatherMap object, as a list
     public List<CityWeatherData> getAllCitiesWeather(){
+        //check internet connectivity
         ArrayList<CityWeatherData> cityWeatherDataArrayList =
                 new ArrayList<CityWeatherData>(citiesWeatherMap.values());
 

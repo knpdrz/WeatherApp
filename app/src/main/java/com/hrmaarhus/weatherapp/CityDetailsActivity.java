@@ -2,6 +2,7 @@ package com.hrmaarhus.weatherapp;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
@@ -21,5 +22,18 @@ public class CityDetailsActivity extends AppCompatActivity {
         humidityTextView = findViewById(R.id.humidityTextView);
         temperatureTextView = findViewById(R.id.temperatureTextView);
         descriptionTextView = findViewById(R.id.descriptionTextView);
+
+        removeBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+            }
+        });
+        okBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+            }
+        });
     }
 }

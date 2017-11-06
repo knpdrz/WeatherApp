@@ -21,4 +21,6 @@ public class Globals {
 
     public static final String DB_LIST_KEY = "cities-list";
 
+    public static final String CONNECT = "CONNECTIVITY";
+
 }
