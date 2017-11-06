@@ -3,6 +3,8 @@ package com.hrmaarhus.weatherapp;
 import android.app.IntentService;
 import android.app.Notification;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -11,7 +13,6 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
-import android.support.annotation.RequiresApi;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
@@ -42,6 +43,8 @@ import static com.hrmaarhus.weatherapp.utils.Globals.DB_LIST_KEY;
 import static com.hrmaarhus.weatherapp.utils.Globals.LOG_TAG;
 import static com.hrmaarhus.weatherapp.utils.Globals.NEW_WEATHER_EVENT;
 import static com.hrmaarhus.weatherapp.utils.Globals.NEW_WEATHER_ONE_CITY_EVENT;
+import static com.hrmaarhus.weatherapp.utils.Globals.NOTIFICATION_CHANNEL_ID;
+import static com.hrmaarhus.weatherapp.utils.Globals.NOTIFICATION_CHANNEL_NAME;
 import static com.hrmaarhus.weatherapp.utils.Globals.ONE_CITY_WEATHER_EXTRA;
 import static com.hrmaarhus.weatherapp.utils.Globals.WEATHER_CHECK_DELAY;
 import static com.hrmaarhus.weatherapp.utils.Globals.WEATHER_CITY_EVENT;
@@ -220,7 +223,6 @@ public class WeatherService extends IntentService {
         //request a string response from the url
         StringRequest stringRequest = new StringRequest(Request.Method.GET,
                 cityUrl, new Response.Listener<String>() {
-            @RequiresApi(api = Build.VERSION_CODES.O)
             @Override
             public void onResponse(String response) {
                 //create cityWeatherData object as a result from parsing
@@ -252,7 +254,6 @@ public class WeatherService extends IntentService {
 
             }
         }, new Response.ErrorListener() {
-            @RequiresApi(api = Build.VERSION_CODES.O)
             @Override
             public void onErrorResponse(VolleyError error) {
                 Log.d(LOG_TAG,"err : "+error.getLocalizedMessage());
@@ -330,12 +331,11 @@ public class WeatherService extends IntentService {
 
     //notifies 'listeners' on new weather data availability
     //in a local broadcast and a notification
-    @RequiresApi(api = Build.VERSION_CODES.O)
     private void notifyOnWeatherUpdate(){
         Log.d(LOG_TAG,"WeatherService: notifyOnWeatherUpdate() sending weather update broadcast");
         //sets a notification
         //todo commented this out
-       // Notify();
+        Notify();
         //sends the broadcast
         Intent updateIntent = new Intent(NEW_WEATHER_EVENT);
         LocalBroadcastManager.getInstance(this).sendBroadcast(updateIntent);
@@ -387,20 +387,12 @@ public class WeatherService extends IntentService {
         updateWeatherCitiesMap(citiesWeatherMap);
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
     private void Notify(){
+        notificationHelper = new NotificationHelper(this);
         Date date = new Date();
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
         String currentdate = sdf.format(date);
-        notificationHelper = new NotificationHelper(this);
-        Notification.Builder builder = notificationHelper
-                .getChannelNotification(getResources()
-                        .getString(R.string.app_name),  "Last checked weather at: " + currentdate);
-        notificationHelper.getManager().notify(1991, builder.build());
+        notificationHelper.CreateNotification(getResources()
+                .getString(R.string.app_name),  "Last checked weather at: " + currentdate);
     }
-
-
-
-
-
 }

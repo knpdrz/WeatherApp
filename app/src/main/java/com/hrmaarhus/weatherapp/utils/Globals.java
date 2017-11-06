@@ -31,5 +31,6 @@ public class Globals {
 
     public static final String NOTIFICATION_CHANNEL_ID = "HRM_WEATHER_ID";
     public static final String NOTIFICATION_CHANNEL_NAME = "HRM_WEATHER_APP";
+    public static final int UNIQUE_NOTIFICATION_ID = 1991;
 
 }
