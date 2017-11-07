@@ -64,9 +64,6 @@ public class CityDetailsActivity extends AppCompatActivity {
                 returnIntent.putExtra(CITY_NAME_TO_BE_REMOVED, cityName);
                 setResult(RESULT_OK, returnIntent);
 
-                //unbindService(mConnection);
-                //Log.d(LOG_TAG, "=====service=== CityDetailsService about to unbind from service");
-
                 finish();
             }
         });
@@ -74,24 +71,13 @@ public class CityDetailsActivity extends AppCompatActivity {
         okBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //return from activity
-              //  Log.d(LOG_TAG, "=====service=== CityDetailsService about to unbind from service");
-               // unbindService(mConnection);
                 finish();
             }
         });
 
-        //retrieving value of mBound so that we don't rebind on rotation
-        //if(savedInstanceState != null){
-          //  mBound = savedInstanceState.getBoolean(IS_BOUND);
-        //}
-
-        //binding to WeatherService
-        //if(!mBound) {
+        //binding to service
         Intent weatherIntent = new Intent(getApplicationContext(), WeatherService.class);
-        Log.d(LOG_TAG, "=====service=== CityDetailsService about to bind to service");
         bindService(weatherIntent, mConnection, Context.BIND_AUTO_CREATE);
-        //}
 
 
         //creating local broadcast receiver
@@ -102,7 +88,6 @@ public class CityDetailsActivity extends AppCompatActivity {
                         new IntentFilter(NEW_WEATHER_EVENT));
 
 
-
         //retrieve name of the city that will be displayed in the activity
         Intent parentIntent = getIntent();
         cityName = parentIntent.getStringExtra(CITY_NAME);
@@ -111,10 +96,7 @@ public class CityDetailsActivity extends AppCompatActivity {
         //and startup weather data for it
         cityWeatherData = (CityWeatherData)parentIntent.getSerializableExtra(CWD_OBJECT);
         if(cityWeatherData!=null){
-            Log.d(LOG_TAG,"CityDetailsActivity cwd from parent: city name= "+cityWeatherData.getCityName());
             displayWeatherData(cityWeatherData);
-        }else{
-            Log.d(LOG_TAG, "CityDetailsActivity cwd from parent is EMPTY");
         }
 
     }
@@ -122,19 +104,11 @@ public class CityDetailsActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         if(mConnection != null){
-            Log.d(LOG_TAG, "--------------m-------CityDetailsActivity unbinding from the service");
+            Log.d(LOG_TAG, "CityDetailsActivity unbinding from the service");
             unbindService(mConnection);
         }
         super.onDestroy();
     }
-
-    //todo remove unused
-    /*public void onSaveInstanceState(Bundle savedInstanceState) {
-        //saving the fact that we are already bound to the service
-        savedInstanceState.putBoolean(IS_BOUND, mBound);
-        super.onSaveInstanceState(savedInstanceState);
-    }*/
-
 
     //displaying city weather data
     private void displayWeatherData(CityWeatherData cityWeatherData){

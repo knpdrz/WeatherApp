@@ -90,18 +90,7 @@ public class MainActivity extends AppCompatActivity{
         Intent weatherIntent = new Intent(getApplicationContext(), WeatherService.class);
         startService(weatherIntent);
 
-        //retrieving value of mBound so that we don't rebind on rotation
-       /* if(savedInstanceState != null){
-            mBound = savedInstanceState.getBoolean(IS_BOUND);
-            Log.d(LOG_TAG, "mbound in on create = "+mBound);
-        }*/
-
-       // if(!mBound){
-        //binding to WeatherService
-
         bindService(weatherIntent, mConnection, Context.BIND_AUTO_CREATE);
-
-        //}
 
 
         //creating local broadcast receiver
@@ -145,9 +134,6 @@ public class MainActivity extends AppCompatActivity{
                 //broadcast informs about new weather data available
                 //so get newest data
                 Log.d(LOG_TAG,"MainActivity: there is new weather data available");
-                //todo remove
-                if(mWeatherService == null)
-                    Log.d(LOG_TAG,"==== weather service is null!");
 
                 ArrayList<CityWeatherData> cityWeatherDataArrayList =
                         (ArrayList<CityWeatherData>)mWeatherService.getAllCitiesWeather();
@@ -193,32 +179,21 @@ public class MainActivity extends AppCompatActivity{
     @Override
     protected void onDestroy() {
         if(mConnection != null){
-            Log.d(LOG_TAG, "--------------m-------MainActivity unbinding from the service");
-
+            Log.d(LOG_TAG, "MainActivity unbinding from the service");
             unbindService(mConnection);
         }
         super.onDestroy();
     }
 
-    //todo this is only a quickfix to make sure list of cities is saved after app is closed
     @Override
     protected void onPause() {
-        //Log.d(LOG_TAG, "MainActivity unbinding from the service");
-        //unbinding from weather service
-        /*if(mConnection != null){
-            unbindService(mConnection);
-        }*/
+
         super.onPause();
 
     }
 
-    protected void onResume() {
-        //Log.d(LOG_TAG, "MainActivity unbinding from the service");
-        //bindService()
-        super.onResume();
-    }
 
-    //---------------------------------------------------list view management
+    //-------------------------------------------------------------------list view management
     //setting up ListView, that will display contents of citiesList
     //clicking on a city item results in opening details for that city
     private void prepareListView(){

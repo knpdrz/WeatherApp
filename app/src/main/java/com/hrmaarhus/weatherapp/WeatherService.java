@@ -135,7 +135,6 @@ public class WeatherService extends IntentService {
     //which is binding to this service
     @Override
     protected void onHandleIntent(Intent intent) {
-        //todo do nothing after binding?
     }
 
     //---------------------------------------------------------------database management
@@ -187,13 +186,6 @@ public class WeatherService extends IntentService {
         }
         Log.d(LOG_TAG,"WeatherService GetCityListFromDb getting list with " + citiesList.size() + " cities");
         return citiesList;
-    }
-
-    //todo there is no guarantee this will be called
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        saveCityListToDb();
     }
 
 
@@ -321,17 +313,10 @@ public class WeatherService extends IntentService {
 
     @Override
     public IBinder onBind(Intent intent) {
-        Log.d(LOG_TAG, "==------------------s=== WeatherService sb bound to the service");
+        Log.d(LOG_TAG, "WeatherService sb bound to the service");
         return mBinder;
     }
 
-    //todo temporary solution to save db data when app closed
-    @Override
-    public boolean onUnbind(Intent intent) {
-        Log.d(LOG_TAG, "==========================WeatherService sb unbound from this service");
-        saveCityListToDb();
-        return super.onUnbind(intent);
-    }
 
     //notifies 'listeners' on new weather data availability
     //in a local broadcast and a notification
@@ -362,10 +347,6 @@ public class WeatherService extends IntentService {
         ArrayList<CityWeatherData> cityWeatherDataArrayList =
                 new ArrayList<CityWeatherData>(citiesWeatherMap.values());
 
-        /*Log.d(LOG_TAG, "Weather Service about to send city weather data with: ");
-        for(CityWeatherData cityWeatherData : cityWeatherDataArrayList){
-            Log.d(LOG_TAG,"::: "+cityWeatherData.getCityName());
-        }*/
         return cityWeatherDataArrayList;
     }
 
