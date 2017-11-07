@@ -16,7 +16,6 @@ public class Globals {
 
     public static final String CWD_OBJECT = "cwd-object";
 
-    public static final String NEW_WEATHER_ONE_CITY_EVENT = "one-city-weather-event";
     public static final String NEW_WEATHER_EVENT = "new-weather-available";
 
     public static final String CITY_WEATHER_DATA = "city-weather-data";

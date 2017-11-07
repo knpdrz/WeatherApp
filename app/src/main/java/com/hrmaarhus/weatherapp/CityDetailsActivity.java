@@ -29,7 +29,6 @@ import static com.hrmaarhus.weatherapp.utils.Globals.CWD_OBJECT;
 import static com.hrmaarhus.weatherapp.utils.Globals.IS_BOUND;
 import static com.hrmaarhus.weatherapp.utils.Globals.LOG_TAG;
 import static com.hrmaarhus.weatherapp.utils.Globals.NEW_WEATHER_EVENT;
-import static com.hrmaarhus.weatherapp.utils.Globals.NEW_WEATHER_ONE_CITY_EVENT;
 import static com.hrmaarhus.weatherapp.utils.Globals.ONE_CITY_WEATHER_EXTRA;
 
 public class CityDetailsActivity extends AppCompatActivity {
@@ -103,10 +102,13 @@ public class CityDetailsActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        if(mConnection != null){
+        if(mConnection != null && mBound){
             Log.d(LOG_TAG, "CityDetailsActivity unbinding from the service");
             unbindService(mConnection);
         }
+
+        //unregistering from broadcasts
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mWeatherReceiver);
         super.onDestroy();
     }
 

@@ -43,7 +43,6 @@ import static com.hrmaarhus.weatherapp.utils.Globals.CITY_WEATHER_DATA;
 import static com.hrmaarhus.weatherapp.utils.Globals.DB_LIST_KEY;
 import static com.hrmaarhus.weatherapp.utils.Globals.LOG_TAG;
 import static com.hrmaarhus.weatherapp.utils.Globals.NEW_WEATHER_EVENT;
-import static com.hrmaarhus.weatherapp.utils.Globals.NEW_WEATHER_ONE_CITY_EVENT;
 import static com.hrmaarhus.weatherapp.utils.Globals.NOTIFICATION_CHANNEL_ID;
 import static com.hrmaarhus.weatherapp.utils.Globals.NOTIFICATION_CHANNEL_NAME;
 import static com.hrmaarhus.weatherapp.utils.Globals.ONE_CITY_WEATHER_EXTRA;
@@ -65,7 +64,7 @@ public class WeatherService extends IntentService {
     private HashMap<String, CityWeatherData> citiesWeatherMap;
 
     private int numberOfRequestsToMake = 0;
-    private boolean singleCheck = false;
+
     public WeatherService(){
         super("WeatherService");
 
@@ -97,8 +96,7 @@ public class WeatherService extends IntentService {
         if(citiesWeatherList != null){
             for(String cityString : citiesWeatherList){
                 citiesWeatherMap.put(cityString, new CityWeatherData());
-                //todo remove:
-                Log.d(LOG_TAG,"--putting " + cityString + " to map (with empty CWD object)");
+
             }
         }
 
@@ -144,7 +142,15 @@ public class WeatherService extends IntentService {
         Log.d(LOG_TAG,"WeatherService addCity() adding "+ cityString + " to city list");
 
         citiesWeatherMap.put(cityString, new CityWeatherData());
-        requestSingleCityWeatherUpdate(cityString);
+
+        //saving new list to a database
+        saveCityListToDb();
+
+        //request weather check for one city
+        numberOfRequestsToMake = 1;
+        handleOneCityWeatherData(cityString, citiesWeatherMap);
+
+        //requestSingleCityWeatherUpdate(cityString);
     }
 
     //Remove city from cities map
@@ -152,10 +158,12 @@ public class WeatherService extends IntentService {
         if(citiesWeatherMap.containsKey(cityString)){
             citiesWeatherMap.remove(cityString);
 
+            //saving changed list to db
+            saveCityListToDb();
         }
     }
 
-    //Save citiesWeatherMap keys (city strings) to Db.
+    //save citiesWeatherMap keys (city strings) to Db.
     //The list is formated to a jsonstring and saved as a string.
     private void saveCityListToDb(){
         Log.d(LOG_TAG,"WeatherService saveCityListToDb saving list with " + citiesWeatherMap.size() + " cities");
@@ -234,18 +242,14 @@ public class WeatherService extends IntentService {
                     updateOneCityWeatherData(cityString, cityWeatherData, cityWeatherDataMap);
                     Log.d(LOG_TAG, "problem with parsing gson (api problem maybe?)");
                 }
-                //todo add comment
-                if(!singleCheck) {
-                    numberOfRequestsToMake--;
-                    if (numberOfRequestsToMake == 0) {
-                        //all requests finished, so all cities on the map are updated
-                        //send broadcast to listeners about data being ready
-                        notifyOnWeatherUpdate();
-                    }
-                }else{
-                    notifyOnOneCityWeatherUpdate(cityString);
-                    singleCheck = false;
+
+                numberOfRequestsToMake--;
+                if (numberOfRequestsToMake == 0) {
+                    //all requests finished, so all cities on the map are updated
+                    //send broadcast to listeners about data being ready
+                    notifyOnWeatherUpdate();
                 }
+
 
             }
         }, new Response.ErrorListener() {
@@ -263,16 +267,10 @@ public class WeatherService extends IntentService {
                 //broadcast about new weather data available will not be called,
                 //unless all requests are made (that is numberOfRequestsToMake reaches 0)
                 //if one request failed, we shouldn't block the update
-                if(!singleCheck){
-                    numberOfRequestsToMake--;
-                    if(numberOfRequestsToMake == 0) {
-                        notifyOnWeatherUpdate();
-                    }
-                }else{
-                    notifyOnOneCityWeatherUpdate(cityString);
-                    singleCheck = false;
+                numberOfRequestsToMake--;
+                if(numberOfRequestsToMake == 0) {
+                    notifyOnWeatherUpdate();
                 }
-
 
             }
         });
@@ -299,6 +297,7 @@ public class WeatherService extends IntentService {
                 cityString = city.getKey();
                 //performs api call for each city
                 handleOneCityWeatherData(cityString, cityWeatherDataMap);
+
             }
         }
     }
@@ -330,16 +329,6 @@ public class WeatherService extends IntentService {
         LocalBroadcastManager.getInstance(this).sendBroadcast(updateIntent);
     }
 
-    //weather data for one city is available- sends that city name
-    //and sets a notification
-    //in a broadcast
-    private void notifyOnOneCityWeatherUpdate(String cityString){
-        Notify();
-        Intent updateIntent = new Intent(NEW_WEATHER_ONE_CITY_EVENT);
-
-        updateIntent.putExtra(ONE_CITY_WEATHER_EXTRA, cityString);
-        LocalBroadcastManager.getInstance(this).sendBroadcast(updateIntent);
-    }
 
     //-----------------------------------functions available to clients, used for getting weather data
     //returns CityWeatherData objects from citiesWeatherMap object, as a list
@@ -363,11 +352,6 @@ public class WeatherService extends IntentService {
         return cityWeatherData;
     }
 
-    //tries to update weather data for a single city
-    public void requestSingleCityWeatherUpdate(String cityName){
-        singleCheck = true;
-        handleOneCityWeatherData(cityName, citiesWeatherMap);
-    }
 
     //method clients can call to get weather data update on all cities
     public void requestAllCitiesWeatherUpdate(){
