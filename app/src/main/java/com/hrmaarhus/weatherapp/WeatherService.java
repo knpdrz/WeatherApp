@@ -150,7 +150,6 @@ public class WeatherService extends IntentService {
         numberOfRequestsToMake = 1;
         handleOneCityWeatherData(cityString, citiesWeatherMap);
 
-        //requestSingleCityWeatherUpdate(cityString);
     }
 
     //Remove city from cities map
@@ -161,6 +160,11 @@ public class WeatherService extends IntentService {
             //saving changed list to db
             saveCityListToDb();
         }
+    }
+    //todo remove, for testing only
+    public void clearDb(){
+        citiesWeatherMap.clear();
+        saveCityListToDb();
     }
 
     //save citiesWeatherMap keys (city strings) to Db.
@@ -206,7 +210,8 @@ public class WeatherService extends IntentService {
                                           HashMap<String, CityWeatherData> cityWeatherDataMap){
         if(cityWeatherDataMap.containsKey(cityString)){
             //todo could add identity check newCityWeatherData!=prevCityWeatherData
-            cityWeatherDataMap.put(cityString, newCityWeatherData);
+            cityWeatherDataMap.remove(cityString);
+            cityWeatherDataMap.put(newCityWeatherData.getCityName(), newCityWeatherData);
         }
     }
 

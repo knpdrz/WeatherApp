@@ -209,16 +209,6 @@ public class MainActivity extends AppCompatActivity{
         listView.invalidateViews();
     }
 
-    //adds one CityWeatherData object to the list view
-    private void addCityToListView(CityWeatherData cityWeatherData){
-        Log.d(LOG_TAG,"adding one city to list view");
-        citiesList.add(cityWeatherData);
-        adapter.setData(citiesList);
-
-        adapter.notifyDataSetChanged();
-        listView.invalidateViews();
-    }
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if(requestCode == CITY_DETAILS_REQ_CODE){
