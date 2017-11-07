@@ -9,8 +9,11 @@ import android.widget.BaseAdapter;
 import android.widget.TextView;
 
 
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 
+import static com.hrmaarhus.weatherapp.utils.Globals.CELSIUS_UNICODE;
 import static com.hrmaarhus.weatherapp.utils.Globals.LOG_TAG;
 
 
@@ -27,7 +30,6 @@ public class CityAdapter extends BaseAdapter {
     @Override
     public void notifyDataSetChanged() {
         super.notifyDataSetChanged();
-        Log.d(LOG_TAG, "CityAdapter: notifyDataSetChanged list size " + getCount());
     }
 
     public void setData(ArrayList<CityWeatherData> cities){
@@ -68,8 +70,11 @@ public class CityAdapter extends BaseAdapter {
         TextView cityNameTextView = (TextView)view.findViewById(R.id.list_item_city_name);
         cityNameTextView.setText(city.getCityName());
 
+        String tempStr = String.format("%.1f", city.getTemperature()) + CELSIUS_UNICODE;
+
+
         TextView cityTempTextView = (TextView)view.findViewById(R.id.list_item_temp);
-        cityTempTextView.setText(city.getTemperature().toString());
+        cityTempTextView.setText(tempStr);
 
         TextView cityHumidityTextView = (TextView)view.findViewById(R.id.list_item_humidity);
         cityHumidityTextView.setText(city.getHumidity().toString());

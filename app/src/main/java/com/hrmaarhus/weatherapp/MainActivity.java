@@ -40,6 +40,7 @@ import static com.hrmaarhus.weatherapp.utils.Globals.CITY_NAME_TO_BE_REMOVED;
 import static com.hrmaarhus.weatherapp.utils.Globals.CITY_WAS_REMOVED;
 import static com.hrmaarhus.weatherapp.utils.Globals.CITY_WEATHER_DATA;
 import static com.hrmaarhus.weatherapp.utils.Globals.CWD_OBJECT;
+import static com.hrmaarhus.weatherapp.utils.Globals.IS_BOUND;
 import static com.hrmaarhus.weatherapp.utils.Globals.LOG_TAG;
 import static com.hrmaarhus.weatherapp.utils.Globals.NEW_WEATHER_EVENT;
 import static com.hrmaarhus.weatherapp.utils.Globals.NEW_WEATHER_ONE_CITY_EVENT;
@@ -89,11 +90,18 @@ public class MainActivity extends AppCompatActivity{
         Intent weatherIntent = new Intent(getApplicationContext(), WeatherService.class);
         startService(weatherIntent);
 
-        if(!mBound){
-            //binding to WeatherService
-            bindService(weatherIntent, mConnection, Context.BIND_AUTO_CREATE);
+        //retrieving value of mBound so that we don't rebind on rotation
+       /* if(savedInstanceState != null){
+            mBound = savedInstanceState.getBoolean(IS_BOUND);
+            Log.d(LOG_TAG, "mbound in on create = "+mBound);
+        }*/
 
-        }
+       // if(!mBound){
+        //binding to WeatherService
+
+        bindService(weatherIntent, mConnection, Context.BIND_AUTO_CREATE);
+
+        //}
 
 
         //creating local broadcast receiver
@@ -109,13 +117,20 @@ public class MainActivity extends AppCompatActivity{
                         new IntentFilter(NEW_WEATHER_ONE_CITY_EVENT));
 
 
-
         //setting cities list that will be displayed in the list view
         citiesList = new ArrayList<CityWeatherData>();
 
         //setting up the list view of cities
         prepareListView();
     }
+
+    //todo unused- remove
+    public void onSaveInstanceState(Bundle savedInstanceState) {
+        //saving the fact that we are already bound to the service
+        savedInstanceState.putBoolean(IS_BOUND, mBound);
+        super.onSaveInstanceState(savedInstanceState);
+    }
+
 
 
     //---------------------------------------------broadcast receiver
@@ -130,10 +145,15 @@ public class MainActivity extends AppCompatActivity{
                 //broadcast informs about new weather data available
                 //so get newest data
                 Log.d(LOG_TAG,"MainActivity: there is new weather data available");
+                //todo remove
+                if(mWeatherService == null)
+                    Log.d(LOG_TAG,"==== weather service is null!");
 
                 ArrayList<CityWeatherData> cityWeatherDataArrayList =
                         (ArrayList<CityWeatherData>)mWeatherService.getAllCitiesWeather();
                 updateCitiesWeatherListView(cityWeatherDataArrayList);
+
+
             }else if(intent.getAction().equals(NEW_WEATHER_ONE_CITY_EVENT)){
                 //broadcast contains updated weather city data for one city
                 //add that data to the list view
@@ -164,21 +184,38 @@ public class MainActivity extends AppCompatActivity{
         }
 
         @Override
-        public void onServiceDisconnected(ComponentName componentName) {
+            public void onServiceDisconnected(ComponentName componentName) {
+            Log.d(LOG_TAG, "MainActivity: onServiceDisconnected");
             mBound = false;
         }
     };
 
+    @Override
+    protected void onDestroy() {
+        if(mConnection != null){
+            Log.d(LOG_TAG, "--------------m-------MainActivity unbinding from the service");
+
+            unbindService(mConnection);
+        }
+        super.onDestroy();
+    }
+
     //todo this is only a quickfix to make sure list of cities is saved after app is closed
     @Override
     protected void onPause() {
-        Log.d(LOG_TAG, "MainActivity unbinding from the service");
+        //Log.d(LOG_TAG, "MainActivity unbinding from the service");
         //unbinding from weather service
         /*if(mConnection != null){
             unbindService(mConnection);
         }*/
         super.onPause();
 
+    }
+
+    protected void onResume() {
+        //Log.d(LOG_TAG, "MainActivity unbinding from the service");
+        //bindService()
+        super.onResume();
     }
 
     //---------------------------------------------------list view management

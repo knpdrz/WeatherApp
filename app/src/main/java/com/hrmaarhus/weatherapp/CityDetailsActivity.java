@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.IBinder;
+import android.os.PersistableBundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -25,6 +26,7 @@ import static com.hrmaarhus.weatherapp.utils.Globals.CITY_NAME;
 import static com.hrmaarhus.weatherapp.utils.Globals.CITY_NAME_TO_BE_REMOVED;
 import static com.hrmaarhus.weatherapp.utils.Globals.CITY_WAS_REMOVED;
 import static com.hrmaarhus.weatherapp.utils.Globals.CWD_OBJECT;
+import static com.hrmaarhus.weatherapp.utils.Globals.IS_BOUND;
 import static com.hrmaarhus.weatherapp.utils.Globals.LOG_TAG;
 import static com.hrmaarhus.weatherapp.utils.Globals.NEW_WEATHER_EVENT;
 import static com.hrmaarhus.weatherapp.utils.Globals.NEW_WEATHER_ONE_CITY_EVENT;
@@ -62,8 +64,8 @@ public class CityDetailsActivity extends AppCompatActivity {
                 returnIntent.putExtra(CITY_NAME_TO_BE_REMOVED, cityName);
                 setResult(RESULT_OK, returnIntent);
 
-                unbindService(mConnection);
-                Log.d(LOG_TAG, "=====service=== CityDetailsService about to unbind from service");
+                //unbindService(mConnection);
+                //Log.d(LOG_TAG, "=====service=== CityDetailsService about to unbind from service");
 
                 finish();
             }
@@ -73,18 +75,23 @@ public class CityDetailsActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 //return from activity
-                Log.d(LOG_TAG, "=====service=== CityDetailsService about to unbind from service");
-                unbindService(mConnection);
+              //  Log.d(LOG_TAG, "=====service=== CityDetailsService about to unbind from service");
+               // unbindService(mConnection);
                 finish();
             }
         });
 
+        //retrieving value of mBound so that we don't rebind on rotation
+        //if(savedInstanceState != null){
+          //  mBound = savedInstanceState.getBoolean(IS_BOUND);
+        //}
+
         //binding to WeatherService
-        if(!mBound) {
-            Intent weatherIntent = new Intent(getApplicationContext(), WeatherService.class);
-            Log.d(LOG_TAG, "=====service=== CityDetailsService about to bind to service");
-            bindService(weatherIntent, mConnection, Context.BIND_AUTO_CREATE);
-        }
+        //if(!mBound) {
+        Intent weatherIntent = new Intent(getApplicationContext(), WeatherService.class);
+        Log.d(LOG_TAG, "=====service=== CityDetailsService about to bind to service");
+        bindService(weatherIntent, mConnection, Context.BIND_AUTO_CREATE);
+        //}
 
 
         //creating local broadcast receiver
@@ -112,9 +119,26 @@ public class CityDetailsActivity extends AppCompatActivity {
 
     }
 
+    @Override
+    protected void onDestroy() {
+        if(mConnection != null){
+            Log.d(LOG_TAG, "--------------m-------CityDetailsActivity unbinding from the service");
+            unbindService(mConnection);
+        }
+        super.onDestroy();
+    }
+
+    //todo remove unused
+    /*public void onSaveInstanceState(Bundle savedInstanceState) {
+        //saving the fact that we are already bound to the service
+        savedInstanceState.putBoolean(IS_BOUND, mBound);
+        super.onSaveInstanceState(savedInstanceState);
+    }*/
+
+
     //displaying city weather data
     private void displayWeatherData(CityWeatherData cityWeatherData){
-        String tempString = cityWeatherData.getTemperature()+CELSIUS_UNICODE;
+        String tempString = String.format("%.1f", cityWeatherData.getTemperature()) + CELSIUS_UNICODE;
         String humidityString = cityWeatherData.getHumidity() + "%";
         String description = cityWeatherData.getWeatherDescription();
 
@@ -140,6 +164,7 @@ public class CityDetailsActivity extends AppCompatActivity {
                 displayWeatherData(cityWeatherData);
 
             }
+
         }
     };
 

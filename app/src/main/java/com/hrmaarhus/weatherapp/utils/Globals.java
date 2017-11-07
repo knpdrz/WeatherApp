@@ -33,4 +33,5 @@ public class Globals {
     public static final String NOTIFICATION_CHANNEL_NAME = "HRM_WEATHER_APP";
     public static final int UNIQUE_NOTIFICATION_ID = 1991;
 
+    public static final String IS_BOUND = "is-bound";
 }

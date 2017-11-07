@@ -34,6 +34,7 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Type;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -228,6 +229,8 @@ public class WeatherService extends IntentService {
                 //create cityWeatherData object as a result from parsing
                 //data received from weather api
                 CityWeatherData cityWeatherData = WeatherParser.parseCityWeatherJsonWithGson(response);
+                cityWeatherData.setTimestamp(Calendar.getInstance().getTime());
+
 
                 if(cityWeatherData!=null){
                     //update that weather data in locally stored city weather data map
@@ -318,13 +321,14 @@ public class WeatherService extends IntentService {
 
     @Override
     public IBinder onBind(Intent intent) {
+        Log.d(LOG_TAG, "==------------------s=== WeatherService sb bound to the service");
         return mBinder;
     }
 
     //todo temporary solution to save db data when app closed
     @Override
     public boolean onUnbind(Intent intent) {
-        Log.d(LOG_TAG, "WeatherService sb unbound from this service");
+        Log.d(LOG_TAG, "==========================WeatherService sb unbound from this service");
         saveCityListToDb();
         return super.onUnbind(intent);
     }
@@ -332,7 +336,7 @@ public class WeatherService extends IntentService {
     //notifies 'listeners' on new weather data availability
     //in a local broadcast and a notification
     private void notifyOnWeatherUpdate(){
-        Log.d(LOG_TAG,"WeatherService: notifyOnWeatherUpdate() sending weather update broadcast");
+        Log.d(LOG_TAG,"WeatherService: notifyOnWeatherUpdate() sending weather update broadcast AND a notification");
         //sets a notification
         //todo commented this out
         Notify();
@@ -342,8 +346,10 @@ public class WeatherService extends IntentService {
     }
 
     //weather data for one city is available- sends that city name
+    //and sets a notification
     //in a broadcast
     private void notifyOnOneCityWeatherUpdate(String cityString){
+        Notify();
         Intent updateIntent = new Intent(NEW_WEATHER_ONE_CITY_EVENT);
 
         updateIntent.putExtra(ONE_CITY_WEATHER_EXTRA, cityString);
@@ -356,10 +362,10 @@ public class WeatherService extends IntentService {
         ArrayList<CityWeatherData> cityWeatherDataArrayList =
                 new ArrayList<CityWeatherData>(citiesWeatherMap.values());
 
-        Log.d(LOG_TAG, "Weather Service about to send city weather data with: ");
+        /*Log.d(LOG_TAG, "Weather Service about to send city weather data with: ");
         for(CityWeatherData cityWeatherData : cityWeatherDataArrayList){
             Log.d(LOG_TAG,"::: "+cityWeatherData.getCityName());
-        }
+        }*/
         return cityWeatherDataArrayList;
     }
 
