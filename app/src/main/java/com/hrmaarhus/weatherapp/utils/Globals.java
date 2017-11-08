@@ -20,7 +20,7 @@ public class Globals {
 
     public static final String CITY_WEATHER_DATA = "city-weather-data";
 
-    public static final int WEATHER_CHECK_DELAY = 5 * 60 * 60* 60; //in milliseconds- 5 minutes = 5 * 60 * 60* 60 milis
+    public static final int WEATHER_CHECK_DELAY =  10*60* 60; //in milliseconds- 5 minutes = 5 * 60 * 60* 60 milis
 
     public static final String CELSIUS_UNICODE = "\u2103";
 

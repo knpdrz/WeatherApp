@@ -42,14 +42,14 @@ public class NotificationHelper extends ContextWrapper {
                     .setContentText(content)
                     .setContentTitle(title)
                     .setWhen(System.currentTimeMillis())
-                    .setSmallIcon(R.mipmap.ic_launcher_round);
+                    .setSmallIcon(R.mipmap.ic_launcher);
 
             getManager().notify(UNIQUE_NOTIFICATION_ID, notification.build());
         }
         else{
             NotificationCompat.Builder _notificationBuilder = new NotificationCompat.Builder(this)
                     .setAutoCancel(true)
-                    .setSmallIcon(R.mipmap.ic_launcher_round)
+                    .setSmallIcon(R.mipmap.ic_launcher)
                     .setContentTitle(title)
                     .setContentText(content);
 

@@ -134,7 +134,7 @@ public class WeatherService extends IntentService {
                     Log.d(LOG_TAG,"---- "+ WEATHER_CHECK_DELAY + " milisecs gone, bg runner");
                 }
                 else {
-                    //Notification about the connectivity
+                    NotifyNoInternet();
                     Log.d(LOG_TAG,"The weather data was not updated since there was no internet connectivity");
                 }
 
@@ -275,7 +275,7 @@ public class WeatherService extends IntentService {
             public void onErrorResponse(VolleyError error) {
                 Log.d(LOG_TAG,"err : "+error.getLocalizedMessage());
                 Toast.makeText(WeatherService.this,
-                        "error while getting weather", Toast.LENGTH_SHORT).show();
+                        "Error while getting weather", Toast.LENGTH_SHORT).show();
 
                 CityWeatherData cityWeatherData = new CityWeatherData();
                 //if there was a problem with getting weather for one city, set it as an empty
@@ -374,7 +374,14 @@ public class WeatherService extends IntentService {
 
     //method clients can call to get weather data update on all cities
     public void requestAllCitiesWeatherUpdate(){
-        updateWeatherCitiesMap(citiesWeatherMap);
+        if(CheckNetworkConnection.isDeviceConnected(getContext())) {
+            updateWeatherCitiesMap(citiesWeatherMap);
+        }
+        else {
+            NotifyNoInternet();
+            Toast.makeText(WeatherService.this,
+                    "No internet connection, cannot refresh data", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void Notify(){
@@ -384,5 +391,14 @@ public class WeatherService extends IntentService {
         String currentdate = sdf.format(date);
         notificationHelper.CreateNotification(getResources()
                 .getString(R.string.app_name),  "Last checked weather at: " + currentdate);
+    }
+
+    private void NotifyNoInternet(){
+        notificationHelper = new NotificationHelper(this);
+        Date date = new Date();
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+        String currentdate = sdf.format(date);
+        notificationHelper.CreateNotification(getResources()
+                .getString(R.string.app_name),  "No internet, last checked at: " + currentdate);
     }
 }

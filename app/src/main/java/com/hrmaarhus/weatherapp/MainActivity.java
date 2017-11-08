@@ -79,9 +79,10 @@ public class MainActivity extends AppCompatActivity{
             @Override
             public void onClick(View view) {
                 String newCity = newCityEditText.getText().toString();
-
-                mWeatherService.addCity(newCity);
-                newCityEditText.setText("");
+                if(newCity != null && newCity != "") {
+                    mWeatherService.addCity(newCity);
+                    newCityEditText.setText("");
+                }
             }
         });
 
@@ -112,7 +113,6 @@ public class MainActivity extends AppCompatActivity{
         @Override
         public void onReceive(Context context, Intent intent) {
             //received local broadcast from weather service
-            Toast.makeText(context, "received new weather!", Toast.LENGTH_SHORT).show();
             Log.d(LOG_TAG,"MainActivity: received broadcast from weather service ");
 
             if(intent.getAction().equals(NEW_WEATHER_EVENT)){
