@@ -1,13 +1,19 @@
 package com.hrmaarhus.weatherapp;
 
 import android.app.IntentService;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Binder;
+import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
+import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.widget.Toast;
@@ -22,12 +28,15 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 import com.hrmaarhus.weatherapp.model.CityWeather;
+import com.hrmaarhus.weatherapp.utils.NotificationHelper;
 import com.hrmaarhus.weatherapp.utils.WeatherParser;
 import com.hrmaarhus.weatherapp.utils.CheckNetworkConnection;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Type;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -35,6 +44,10 @@ import static com.hrmaarhus.weatherapp.utils.Globals.CITY_WEATHER_DATA;
 import static com.hrmaarhus.weatherapp.utils.Globals.DB_LIST_KEY;
 import static com.hrmaarhus.weatherapp.utils.Globals.LOG_TAG;
 import static com.hrmaarhus.weatherapp.utils.Globals.NEW_WEATHER_EVENT;
+import static com.hrmaarhus.weatherapp.utils.Globals.NEW_WEATHER_ONE_CITY_EVENT;
+import static com.hrmaarhus.weatherapp.utils.Globals.NOTIFICATION_CHANNEL_ID;
+import static com.hrmaarhus.weatherapp.utils.Globals.NOTIFICATION_CHANNEL_NAME;
+import static com.hrmaarhus.weatherapp.utils.Globals.ONE_CITY_WEATHER_EXTRA;
 import static com.hrmaarhus.weatherapp.utils.Globals.WEATHER_CHECK_DELAY;
 import static com.hrmaarhus.weatherapp.utils.Globals.WEATHER_CITY_EVENT;
 
@@ -42,47 +55,37 @@ public class WeatherService extends IntentService {
     //creating a binder given to clients
     private final IBinder mBinder = new LocalBinder();
     private ArrayList<String> _cityList;
+    NotificationHelper notificationHelper;
 
     private String API_KEY = "b53c8005699265cde5eec630288d21dc";
     private String URL = "http://api.openweathermap.org/data/2.5/weather?";
 
-    //todo will be removed:
-    String CITY_KEY = "Aarhus,dk";
-
-    String aarhusUrl = URL + "q=" + CITY_KEY + "&appid=" + API_KEY;
-
     //api key b53c8005699265cde5eec630288d21dc
-    //aarhus id 2624652
-    //url http://api.openweathermap.org/data/2.5/weather?q=Aarhus,dk&appid=b53c8005699265cde5eec630288d21dc
+    //example url http://api.openweathermap.org/data/2.5/weather?q=Aarhus,dk&appid=b53c8005699265cde5eec630288d21dc
 
     private HashMap<String, CityWeatherData> citiesWeatherMap;
 
     private int numberOfRequestsToMake = 0;
-    private boolean hasRequestFailed = false;
-
+    private boolean singleCheck = false;
     public WeatherService(){
         super("WeatherService");
-        Log.d(LOG_TAG, "WeatherService constructor");
 
     }
 
     @Override
     public void onCreate() {
         super.onCreate();
-        Log.d(LOG_TAG,"WeatherService: oncreate");
         //creating local list of city names
         //and a map of weather data for these cities, stored as <city string, city weather> pairs
         _cityList = new ArrayList<String>();
 
         citiesWeatherMap = new HashMap<String, CityWeatherData>();
 
-
-        //todo maybe better return that list in GetCityListFromDb() function?
-        GetCityListFromDb();
-        //now citiesWeatherList contains a list of city strings (eg. 'Aarhus,dk')
+        _cityList = getCityListFromDb();
+        //now _cityList contains a list of city strings (eg. 'Aarhus,dk')
 
         //most service functions below use citiesWeatherMap,
-        //so create it with city strings as keys
+        //so create the map with city strings as keys
         createCitiesWeatherMap(_cityList, citiesWeatherMap);
         Log.d(LOG_TAG, "WeatherService _citiesList contains "+_cityList.size() + " cities after on create");
 
@@ -99,6 +102,7 @@ public class WeatherService extends IntentService {
         if(citiesWeatherList != null){
             for(String cityString : citiesWeatherList){
                 citiesWeatherMap.put(cityString, new CityWeatherData());
+                //todo remove:
                 Log.d(LOG_TAG,"--putting " + cityString + " to map (with empty CWD object)");
             }
         }
@@ -116,18 +120,15 @@ public class WeatherService extends IntentService {
 
     //prepares and starts checker of the weather
     // weather will be checked every WEATHER_CHECK_DELAY milliseconds
-    // weather will be checked for cities in the citiesList
+    // weather will be checked for cities in citiesWeatherMap
     //todo cities list check!
     private void setUpWeatherChecker(){
         final Handler handler = new Handler();
         handler.postDelayed(new Runnable() {
-            public void run() {
-                //todo to be removed:
-                //previously:
-                //getCurrentWeather(CITY_KEY);
 
+            public void run(){
+                //updates weather in locally stored map of all cities and weather in them
                 if(CheckNetworkConnection.isDeviceConnected(getContext())) {
-                    //updates weather in locally stored map of all cities and weather in them
                     updateWeatherCitiesMap(citiesWeatherMap);
 
                     handler.postDelayed(this, WEATHER_CHECK_DELAY);
@@ -149,35 +150,28 @@ public class WeatherService extends IntentService {
         //todo do nothing after binding?
     }
 
-    //------------------------------------------database management
-    //Add new city to the citylist
-    public void AddCity(String city){
-        Log.d(LOG_TAG,"WeatherService AddCity() adding "+ city + " to city list");
-        /*if(_cityList !=null){
-            if (_cityList.contains(city)){
-                return;
-            }
-            _cityList.add(city);
+    //---------------------------------------------------------------database management
+    //add new city to the local citiesWeatherMap
+    //sending weather data request for that city
+    public void addCity(String cityString){
+        Log.d(LOG_TAG,"WeatherService addCity() adding "+ cityString + " to city list");
 
-
-            //todo for debugging only
-            printCityList();
-        }*/
-        citiesWeatherMap.put(city, new CityWeatherData());
-
+        citiesWeatherMap.put(cityString, new CityWeatherData());
+        requestSingleCityWeatherUpdate(cityString);
     }
 
-    //Remove city from citylist
-    public void RemoveCity(String city){
-        if (_cityList.contains(city)){
-            _cityList.remove(city);
+    //Remove city from cities map
+    public void removeCity(String cityString){
+        if(citiesWeatherMap.containsKey(cityString)){
+            citiesWeatherMap.remove(cityString);
+
         }
     }
 
     //Save citiesWeatherMap keys (city strings) to Db.
     //The list is formated to a jsonstring and saved as a string.
-    private void SaveCityListToDb(){
-        Log.d(LOG_TAG,"WeatherService SaveCityListToDb saving list with " + _cityList.size() + " cities");
+    private void saveCityListToDb(){
+        Log.d(LOG_TAG,"WeatherService saveCityListToDb saving list with " + citiesWeatherMap.size() + " cities");
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         SharedPreferences.Editor editor = sharedPreferences.edit();
         Gson gson = new Gson();
@@ -189,37 +183,29 @@ public class WeatherService extends IntentService {
 
     }
 
-    //Gets the citylist from the db if it exists.
-    //The string collected from the db, is set as a arraylist.
-    private void GetCityListFromDb(){
+    //returns the list of cities from the db if it exists- empty list otherwise
+    private ArrayList<String> getCityListFromDb(){
+        ArrayList<String> citiesList = new ArrayList<String>();
+
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
         if (sharedPreferences.contains(DB_LIST_KEY)){
             String jsonCityList = sharedPreferences.getString(DB_LIST_KEY, "");
             Gson gson = new Gson();
             Type type = new TypeToken<ArrayList<String>>(){}.getType();
-            _cityList = gson.fromJson(jsonCityList, type);
+            citiesList = gson.fromJson(jsonCityList, type);
         }else{
-            _cityList = new ArrayList<String>();
+            citiesList = new ArrayList<String>();
         }
-        Log.d(LOG_TAG,"WeatherService GetCityListFromDb getting list with " + _cityList.size() + " cities");
-
-    }
-
-    //todo for debugging only
-    private void printCityList(){
-        if(_cityList != null){
-            for(String city :_cityList){
-                Log.d(LOG_TAG, city);
-            }
-        }
+        Log.d(LOG_TAG,"WeatherService GetCityListFromDb getting list with " + citiesList.size() + " cities");
+        return citiesList;
     }
 
     //todo there is no guarantee this will be called
     @Override
     public void onDestroy() {
         super.onDestroy();
-        SaveCityListToDb();
+        saveCityListToDb();
     }
 
 
@@ -260,16 +246,25 @@ public class WeatherService extends IntentService {
                     //update that weather data in locally stored city weather data map
                     updateOneCityWeatherData(cityString, cityWeatherData, cityWeatherDataMap);
 
+                }else{
+                    //problem with parsing gson, set that city weather as an empty CityWeatherDataObject
+                    cityWeatherData = new CityWeatherData();
+                    updateOneCityWeatherData(cityString, cityWeatherData, cityWeatherDataMap);
+                    Log.d(LOG_TAG, "problem with parsing gson (api problem maybe?)");
+                }
+                //todo add comment
+                if(!singleCheck) {
                     numberOfRequestsToMake--;
-                    if(numberOfRequestsToMake == 0){
+                    if (numberOfRequestsToMake == 0) {
                         //all requests finished, so all cities on the map are updated
                         //send broadcast to listeners about data being ready
                         notifyOnWeatherUpdate();
                     }
                 }else{
-                    //todo should this toast be shown?
-                    Toast.makeText(WeatherService.this, "problem with parsing gson (api problem maybe?)", Toast.LENGTH_SHORT).show();
+                    notifyOnOneCityWeatherUpdate(cityString);
+                    singleCheck = false;
                 }
+
             }
         }, new Response.ErrorListener() {
             @Override
@@ -277,6 +272,26 @@ public class WeatherService extends IntentService {
                 Log.d(LOG_TAG,"err : "+error.getLocalizedMessage());
                 Toast.makeText(WeatherService.this,
                         "error while getting weather", Toast.LENGTH_SHORT).show();
+
+                CityWeatherData cityWeatherData = new CityWeatherData();
+                //if there was a problem with getting weather for one city, set it as an empty
+                //CityWeatherData object (so that the user can see which city caused the problem
+                updateOneCityWeatherData(cityString, cityWeatherData, cityWeatherDataMap);
+
+                //broadcast about new weather data available will not be called,
+                //unless all requests are made (that is numberOfRequestsToMake reaches 0)
+                //if one request failed, we shouldn't block the update
+                if(!singleCheck){
+                    numberOfRequestsToMake--;
+                    if(numberOfRequestsToMake == 0) {
+                        notifyOnWeatherUpdate();
+                    }
+                }else{
+                    notifyOnOneCityWeatherUpdate(cityString);
+                    singleCheck = false;
+                }
+
+
             }
         });
 
@@ -286,23 +301,24 @@ public class WeatherService extends IntentService {
 
     //updates weather data for all cities in @param cityWeatherDataMap
     private void updateWeatherCitiesMap(HashMap<String, CityWeatherData> cityWeatherDataMap){
+        // a broadcast should be sent
+        // after updating weather for all cities locally (in the map),
+        // however calls to the api are async
+        // so we set numberOfRequestsToMake variable
+        // to the number of cities in the map
+        // after response is received from the api, this var is decremented
+        // when variable reaches 0, weather for all cities in the map has been updated
+        //todo could be done with an observer pattern (calling notifyOn... function)
+        numberOfRequestsToMake = cityWeatherDataMap.size();
+
         String cityString;
         if(cityWeatherDataMap != null){
             for (HashMap.Entry<String, CityWeatherData> city : cityWeatherDataMap.entrySet()){
                 cityString = city.getKey();
+                //performs api call for each city
                 handleOneCityWeatherData(cityString, cityWeatherDataMap);
             }
-
         }
-
-        // a broadcast about updated weather data availability should be sent
-        // after updating weather for all cities locally,
-        // but as calls to the api are async, we keep track of all requests to me made
-        // in numberOfRequestsToMake variable
-        // when this number reaches 0, broadcast is sent
-        //todo could be done with an observer pattern (calling notifyOn... function)
-        numberOfRequestsToMake = cityWeatherDataMap.size();
-
     }
 
     //-------------------------------------------handling binding
@@ -322,26 +338,28 @@ public class WeatherService extends IntentService {
     @Override
     public boolean onUnbind(Intent intent) {
         Log.d(LOG_TAG, "WeatherService sb unbound from this service");
-        SaveCityListToDb();
+        saveCityListToDb();
         return super.onUnbind(intent);
     }
 
-    //todo remove
-    //sends a local broadcast with current weather data of one city
-    private void sendWeatherUpdate(CityWeatherData cityWeatherData){
-        //creating intent to send in a local broadcast
-        Intent weatherIntent = new Intent(WEATHER_CITY_EVENT);
-        weatherIntent.putExtra(CITY_WEATHER_DATA, cityWeatherData);
-
-        LocalBroadcastManager.getInstance(this).sendBroadcast(weatherIntent);
-    }
-
     //notifies 'listeners' on new weather data availability
-    //in a local broadcast
+    //in a local broadcast and a notification
     private void notifyOnWeatherUpdate(){
         Log.d(LOG_TAG,"WeatherService: notifyOnWeatherUpdate() sending weather update broadcast");
+        //sets a notification
+        //todo commented this out
+        Notify();
+        //sends the broadcast
         Intent updateIntent = new Intent(NEW_WEATHER_EVENT);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(updateIntent);
+    }
 
+    //weather data for one city is available- sends that city name
+    //in a broadcast
+    private void notifyOnOneCityWeatherUpdate(String cityString){
+        Intent updateIntent = new Intent(NEW_WEATHER_ONE_CITY_EVENT);
+
+        updateIntent.putExtra(ONE_CITY_WEATHER_EXTRA, cityString);
         LocalBroadcastManager.getInstance(this).sendBroadcast(updateIntent);
     }
 
@@ -359,8 +377,36 @@ public class WeatherService extends IntentService {
         return cityWeatherDataArrayList;
     }
 
-    //todo CityWeatherData getCurrentWeather(String cityName)
+    //returns CityWeatherData object from citiesWeatherMap if it exists
+    //empty object otherwise
+    public CityWeatherData getCurrentWeather(String cityName){
+        CityWeatherData cityWeatherData;
+        if(citiesWeatherMap.containsKey(cityName)){
+            cityWeatherData = citiesWeatherMap.get(cityName);
+        }else{
+            cityWeatherData = new CityWeatherData();
+        }
 
+        return cityWeatherData;
+    }
 
+    //tries to update weather data for a single city
+    public void requestSingleCityWeatherUpdate(String cityName){
+        singleCheck = true;
+        handleOneCityWeatherData(cityName, citiesWeatherMap);
+    }
 
+    //method clients can call to get weather data update on all cities
+    public void requestAllCitiesWeatherUpdate(){
+        updateWeatherCitiesMap(citiesWeatherMap);
+    }
+
+    private void Notify(){
+        notificationHelper = new NotificationHelper(this);
+        Date date = new Date();
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+        String currentdate = sdf.format(date);
+        notificationHelper.CreateNotification(getResources()
+                .getString(R.string.app_name),  "Last checked weather at: " + currentdate);
+    }
 }

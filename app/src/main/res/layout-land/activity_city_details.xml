@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.hrmaarhus.weatherapp.CityDetailsActivity"
+    tools:layout_editor_absoluteY="73dp">
+
+    <Button
+        android:id="@+id/removeBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="72dp"
+        android:layout_marginTop="20dp"
+        android:text="@string/remove"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/descriptionTextView" />
+
+    <Button
+        android:id="@+id/okBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="49dp"
+        android:text="@string/ok"
+        app:layout_constraintBottom_toBottomOf="@+id/removeBtn"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/removeBtn" />
+
+    <ImageView
+        android:id="@+id/weatherImageView"
+        android:layout_width="0dp"
+        android:layout_height="95dp"
+        android:layout_marginEnd="97dp"
+        android:layout_marginTop="16dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/temperatureTextView"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@mipmap/ic_launcher_foreground" />
+
+    <TextView
+        android:id="@+id/cityNameTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="125dp"
+        android:layout_marginStart="72dp"
+        android:layout_marginTop="42dp"
+        android:textAppearance="@android:style/TextAppearance.DeviceDefault"
+        app:layout_constraintEnd_toStartOf="@+id/temperatureTextView"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/humidityTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        app:layout_constraintStart_toStartOf="@+id/cityNameTextView"
+        app:layout_constraintTop_toBottomOf="@+id/cityNameTextView" />
+
+    <TextView
+        android:id="@+id/temperatureTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="74dp"
+        app:layout_constraintBottom_toBottomOf="@+id/humidityTextView"
+        app:layout_constraintEnd_toStartOf="@+id/weatherImageView"
+        app:layout_constraintStart_toEndOf="@+id/cityNameTextView"
+        app:layout_constraintTop_toTopOf="@+id/humidityTextView" />
+
+    <TextView
+        android:id="@+id/descriptionTitleTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="14dp"
+        android:text="@string/description"
+        android:textAppearance="@android:style/TextAppearance.DeviceDefault"
+        app:layout_constraintBottom_toTopOf="@+id/descriptionTextView"
+        app:layout_constraintStart_toStartOf="@+id/humidityTextView" />
+
+    <TextView
+        android:id="@+id/descriptionTextView"
+        android:layout_width="250dp"
+        android:layout_height="37dp"
+        android:layout_marginBottom="116dp"
+        android:layout_marginTop="116dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/descriptionTitleTextView"
+        app:layout_constraintTop_toTopOf="@+id/cityNameTextView" />
+</android.support.constraint.ConstraintLayout>
