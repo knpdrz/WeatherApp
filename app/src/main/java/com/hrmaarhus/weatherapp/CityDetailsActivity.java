@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.IBinder;
+import android.os.PersistableBundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -25,9 +26,9 @@ import static com.hrmaarhus.weatherapp.utils.Globals.CITY_NAME;
 import static com.hrmaarhus.weatherapp.utils.Globals.CITY_NAME_TO_BE_REMOVED;
 import static com.hrmaarhus.weatherapp.utils.Globals.CITY_WAS_REMOVED;
 import static com.hrmaarhus.weatherapp.utils.Globals.CWD_OBJECT;
+import static com.hrmaarhus.weatherapp.utils.Globals.IS_BOUND;
 import static com.hrmaarhus.weatherapp.utils.Globals.LOG_TAG;
 import static com.hrmaarhus.weatherapp.utils.Globals.NEW_WEATHER_EVENT;
-import static com.hrmaarhus.weatherapp.utils.Globals.NEW_WEATHER_ONE_CITY_EVENT;
 import static com.hrmaarhus.weatherapp.utils.Globals.ONE_CITY_WEATHER_EXTRA;
 
 public class CityDetailsActivity extends AppCompatActivity {
@@ -63,9 +64,6 @@ public class CityDetailsActivity extends AppCompatActivity {
                 returnIntent.putExtra(CITY_NAME_TO_BE_REMOVED, cityName);
                 setResult(RESULT_OK, returnIntent);
 
-                unbindService(mConnection);
-                Log.d(LOG_TAG, "=====service=== CityDetailsService about to unbind from service");
-
                 finish();
             }
         });
@@ -73,19 +71,13 @@ public class CityDetailsActivity extends AppCompatActivity {
         okBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //return from activity
-                Log.d(LOG_TAG, "=====service=== CityDetailsService about to unbind from service");
-                unbindService(mConnection);
                 finish();
             }
         });
 
-        //binding to WeatherService
-        if(!mBound) {
-            Intent weatherIntent = new Intent(getApplicationContext(), WeatherService.class);
-            Log.d(LOG_TAG, "=====service=== CityDetailsService about to bind to service");
-            bindService(weatherIntent, mConnection, Context.BIND_AUTO_CREATE);
-        }
+        //binding to service
+        Intent weatherIntent = new Intent(getApplicationContext(), WeatherService.class);
+        bindService(weatherIntent, mConnection, Context.BIND_AUTO_CREATE);
 
 
         //creating local broadcast receiver
@@ -96,7 +88,6 @@ public class CityDetailsActivity extends AppCompatActivity {
                         new IntentFilter(NEW_WEATHER_EVENT));
 
 
-
         //retrieve name of the city that will be displayed in the activity
         Intent parentIntent = getIntent();
         cityName = parentIntent.getStringExtra(CITY_NAME);
@@ -105,17 +96,26 @@ public class CityDetailsActivity extends AppCompatActivity {
         //and startup weather data for it
         cityWeatherData = (CityWeatherData)parentIntent.getSerializableExtra(CWD_OBJECT);
         if(cityWeatherData!=null){
-            Log.d(LOG_TAG,"CityDetailsActivity cwd from parent: city name= "+cityWeatherData.getCityName());
             displayWeatherData(cityWeatherData);
-        }else{
-            Log.d(LOG_TAG, "CityDetailsActivity cwd from parent is EMPTY");
         }
 
     }
 
+    @Override
+    protected void onDestroy() {
+        if(mConnection != null && mBound){
+            Log.d(LOG_TAG, "CityDetailsActivity unbinding from the service");
+            unbindService(mConnection);
+        }
+
+        //unregistering from broadcasts
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mWeatherReceiver);
+        super.onDestroy();
+    }
+
     //displaying city weather data
     private void displayWeatherData(CityWeatherData cityWeatherData){
-        String tempString = cityWeatherData.getTemperature()+CELSIUS_UNICODE;
+        String tempString = String.format("%.1f", cityWeatherData.getTemperature()) + CELSIUS_UNICODE;
         String humidityString = cityWeatherData.getHumidity() + "%";
         String description = cityWeatherData.getWeatherDescription();
 
@@ -141,6 +141,7 @@ public class CityDetailsActivity extends AppCompatActivity {
                 displayWeatherData(cityWeatherData);
 
             }
+
         }
     };
 

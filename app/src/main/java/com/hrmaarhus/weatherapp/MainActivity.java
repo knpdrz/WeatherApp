@@ -40,9 +40,9 @@ import static com.hrmaarhus.weatherapp.utils.Globals.CITY_NAME_TO_BE_REMOVED;
 import static com.hrmaarhus.weatherapp.utils.Globals.CITY_WAS_REMOVED;
 import static com.hrmaarhus.weatherapp.utils.Globals.CITY_WEATHER_DATA;
 import static com.hrmaarhus.weatherapp.utils.Globals.CWD_OBJECT;
+import static com.hrmaarhus.weatherapp.utils.Globals.IS_BOUND;
 import static com.hrmaarhus.weatherapp.utils.Globals.LOG_TAG;
 import static com.hrmaarhus.weatherapp.utils.Globals.NEW_WEATHER_EVENT;
-import static com.hrmaarhus.weatherapp.utils.Globals.NEW_WEATHER_ONE_CITY_EVENT;
 import static com.hrmaarhus.weatherapp.utils.Globals.ONE_CITY_WEATHER_EXTRA;
 import static com.hrmaarhus.weatherapp.utils.Globals.WEATHER_CITY_EVENT;
 
@@ -89,25 +89,15 @@ public class MainActivity extends AppCompatActivity{
         Intent weatherIntent = new Intent(getApplicationContext(), WeatherService.class);
         startService(weatherIntent);
 
-        if(!mBound){
-            //binding to WeatherService
-            bindService(weatherIntent, mConnection, Context.BIND_AUTO_CREATE);
-
-        }
+        bindService(weatherIntent, mConnection, Context.BIND_AUTO_CREATE);
 
 
         //creating local broadcast receiver
         //to be able to get data from the weather service
         //listen for 'new data available' broadcast
-        //and 'new weather for one city available' broadcast
         LocalBroadcastManager.getInstance(this)
                 .registerReceiver(mWeatherReceiver,
                         new IntentFilter(NEW_WEATHER_EVENT));
-
-        LocalBroadcastManager.getInstance(this)
-                .registerReceiver(mWeatherReceiver,
-                        new IntentFilter(NEW_WEATHER_ONE_CITY_EVENT));
-
 
 
         //setting cities list that will be displayed in the list view
@@ -117,13 +107,12 @@ public class MainActivity extends AppCompatActivity{
         prepareListView();
     }
 
-
     //---------------------------------------------broadcast receiver
     private BroadcastReceiver mWeatherReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             //received local broadcast from weather service
-            Toast.makeText(context, "received broadcast!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, "received new weather!", Toast.LENGTH_SHORT).show();
             Log.d(LOG_TAG,"MainActivity: received broadcast from weather service ");
 
             if(intent.getAction().equals(NEW_WEATHER_EVENT)){
@@ -134,16 +123,8 @@ public class MainActivity extends AppCompatActivity{
                 ArrayList<CityWeatherData> cityWeatherDataArrayList =
                         (ArrayList<CityWeatherData>)mWeatherService.getAllCitiesWeather();
                 updateCitiesWeatherListView(cityWeatherDataArrayList);
-            }else if(intent.getAction().equals(NEW_WEATHER_ONE_CITY_EVENT)){
-                //broadcast contains updated weather city data for one city
-                //add that data to the list view
-                String cityString = intent.getStringExtra(ONE_CITY_WEATHER_EXTRA);
-                Log.d(LOG_TAG,"MainActivity: received one city weather data for "+cityString);
 
-                if(cityString != null){
-                    CityWeatherData cityWeatherData = mWeatherService.getCurrentWeather(cityString);
-                    addCityToListView(cityWeatherData);
-                }
+
             }
         }
     };
@@ -164,24 +145,32 @@ public class MainActivity extends AppCompatActivity{
         }
 
         @Override
-        public void onServiceDisconnected(ComponentName componentName) {
+            public void onServiceDisconnected(ComponentName componentName) {
+            Log.d(LOG_TAG, "MainActivity: onServiceDisconnected");
             mBound = false;
         }
     };
 
-    //todo this is only a quickfix to make sure list of cities is saved after app is closed
+    @Override
+    protected void onDestroy() {
+        if(mConnection != null && mBound){
+            Log.d(LOG_TAG, "MainActivity unbinding from the service");
+            unbindService(mConnection);
+        }
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mWeatherReceiver);
+
+        super.onDestroy();
+    }
+
     @Override
     protected void onPause() {
-        Log.d(LOG_TAG, "MainActivity unbinding from the service");
-        //unbinding from weather service
-        /*if(mConnection != null){
-            unbindService(mConnection);
-        }*/
+
         super.onPause();
 
     }
 
-    //---------------------------------------------------list view management
+
+    //-------------------------------------------------------------------list view management
     //setting up ListView, that will display contents of citiesList
     //clicking on a city item results in opening details for that city
     private void prepareListView(){
@@ -214,16 +203,6 @@ public class MainActivity extends AppCompatActivity{
         citiesList = cityWeatherDataArrayList;
 
         //todo not the best practice?
-        adapter.setData(citiesList);
-
-        adapter.notifyDataSetChanged();
-        listView.invalidateViews();
-    }
-
-    //adds one CityWeatherData object to the list view
-    private void addCityToListView(CityWeatherData cityWeatherData){
-        Log.d(LOG_TAG,"adding one city to list view");
-        citiesList.add(cityWeatherData);
         adapter.setData(citiesList);
 
         adapter.notifyDataSetChanged();

@@ -7,6 +7,10 @@ import com.google.gson.GsonBuilder;
 import com.hrmaarhus.weatherapp.CityWeatherData;
 import com.hrmaarhus.weatherapp.model.CityWeather;
 
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
+import java.util.Calendar;
+
 
 /**
  * Created by Moon on 29.10.2017.
@@ -21,15 +25,14 @@ public class WeatherParser {
         Gson gson = new GsonBuilder().create();
         CityWeather weatherInfo =  gson.fromJson(jsonString, CityWeather.class);
         if(weatherInfo != null) {
-            Log.d("MR",weatherInfo.toString());
-
+            
             CityWeatherData cityWeatherData = new CityWeatherData(
                     weatherInfo.name,
                     weatherInfo.main.humidity,
-                    weatherInfo.main.temp.doubleValue() + TO_CELSIUS_FROM_KELVIN,
+                    weatherInfo.main.temp + TO_CELSIUS_FROM_KELVIN,
                     weatherInfo.weather.get(0).icon,
                     weatherInfo.weather.get(0).description,
-                    "timestamp");
+                    Calendar.getInstance().getTime());
 
 
             return cityWeatherData;

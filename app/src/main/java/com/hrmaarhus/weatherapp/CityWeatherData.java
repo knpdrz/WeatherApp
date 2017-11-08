@@ -2,18 +2,19 @@ package com.hrmaarhus.weatherapp;
 
 
 import java.io.Serializable;
+import java.util.Date;
 
 /**
  * Created by Moon on 29.10.2017.
  */
 
 public class CityWeatherData implements Serializable {
-    public String cityName;
-    public Double humidity;
-    public Double temperature;
-    public String iconType;
-    public String weatherDescription;
-    public String timestamp;
+    private String cityName;
+    private Double humidity;
+    private Double temperature;
+    private String iconType;
+    private String weatherDescription;
+    private Date timestamp;
 
     public CityWeatherData(){
         this.cityName = "";
@@ -21,10 +22,10 @@ public class CityWeatherData implements Serializable {
         this.temperature = 0.0;
         this.iconType = "";
         this.weatherDescription = "";
-        this.timestamp = "";
+        this.timestamp = new Date();
     }
 
-    public CityWeatherData(String cityName, Double humidity, Double temperature, String iconType, String weatherDescription, String timestamp) {
+    public CityWeatherData(String cityName, Double humidity, Double temperature, String iconType, String weatherDescription, Date timestamp) {
         this.cityName = cityName;
         this.humidity = humidity;
         this.temperature = temperature;
@@ -53,7 +54,9 @@ public class CityWeatherData implements Serializable {
         return weatherDescription;
     }
 
-    public String getTimestamp() {
+    public Date getTimestamp() {
         return timestamp;
     }
+
+    public void setTimestamp(Date timestamp) { this.timestamp = timestamp;}
 }
