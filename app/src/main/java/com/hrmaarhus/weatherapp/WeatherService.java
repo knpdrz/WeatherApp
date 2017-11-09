@@ -233,68 +233,79 @@ public class WeatherService extends IntentService {
     //that object is the one whose city string (eg. 'Aarhus,dk') is @param cityString
     //used : https://stackoverflow.com/questions/44958795/android-volley-get-callback-when-all-request-finished
     public void handleOneCityWeatherData(final String cityString, final HashMap<String, CityWeatherData> cityWeatherDataMap){
-        String cityUrl = URL + "q=" + cityString + "&appid=" + API_KEY;
-        Log.d(LOG_TAG,"sending weather request to: " + cityUrl);
 
-        //instantiate the RequestQueue
-        RequestQueue queue = Volley.newRequestQueue(this);
+        if(CheckNetworkConnection.isDeviceConnected(getContext())) {
+            String cityUrl = URL + "q=" + cityString + "&appid=" + API_KEY;
+            Log.d(LOG_TAG,"sending weather request to: " + cityUrl);
 
-        //request a string response from the url
-        StringRequest stringRequest = new StringRequest(Request.Method.GET,
-                cityUrl, new Response.Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-                //create cityWeatherData object as a result from parsing
-                //data received from weather api
-                CityWeatherData cityWeatherData = WeatherParser.parseCityWeatherJsonWithGson(response);
-                cityWeatherData.setTimestamp(Calendar.getInstance().getTime());
+            //instantiate the RequestQueue
+            RequestQueue queue = Volley.newRequestQueue(this);
+
+            //request a string response from the url
+            StringRequest stringRequest = new StringRequest(Request.Method.GET,
+                    cityUrl, new Response.Listener<String>() {
+                @Override
+                public void onResponse(String response) {
+                    //create cityWeatherData object as a result from parsing
+                    //data received from weather api
+                    CityWeatherData cityWeatherData = WeatherParser.parseCityWeatherJsonWithGson(response);
+                    cityWeatherData.setTimestamp(Calendar.getInstance().getTime());
 
 
-                if(cityWeatherData!=null){
-                    //update that weather data in locally stored city weather data map
+                    if(cityWeatherData!=null){
+                        //update that weather data in locally stored city weather data map
+                        updateOneCityWeatherData(cityString, cityWeatherData, cityWeatherDataMap);
+
+                    }else{
+                        //problem with parsing gson, set that city weather as an empty CityWeatherDataObject
+                        cityWeatherData = new CityWeatherData();
+                        updateOneCityWeatherData(cityString, cityWeatherData, cityWeatherDataMap);
+                        Log.d(LOG_TAG, "problem with parsing gson (api problem maybe?)");
+                    }
+
+                    numberOfRequestsToMake--;
+                    if (numberOfRequestsToMake == 0) {
+                        //all requests finished, so all cities on the map are updated
+                        //send broadcast to listeners about data being ready
+                        notifyOnWeatherUpdate();
+                    }
+
+
+                }
+            }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError error) {
+                    Log.d(LOG_TAG,"err : "+error.getLocalizedMessage());
+                    Toast.makeText(WeatherService.this,
+                            "Error while getting weather", Toast.LENGTH_SHORT).show();
+
+                    CityWeatherData cityWeatherData = new CityWeatherData();
+                    //if there was a problem with getting weather for one city, set it as an empty
+                    //CityWeatherData object (so that the user can see which city caused the problem
                     updateOneCityWeatherData(cityString, cityWeatherData, cityWeatherDataMap);
 
-                }else{
-                    //problem with parsing gson, set that city weather as an empty CityWeatherDataObject
-                    cityWeatherData = new CityWeatherData();
-                    updateOneCityWeatherData(cityString, cityWeatherData, cityWeatherDataMap);
-                    Log.d(LOG_TAG, "problem with parsing gson (api problem maybe?)");
+                    //broadcast about new weather data available will not be called,
+                    //unless all requests are made (that is numberOfRequestsToMake reaches 0)
+                    //if one request failed, we shouldn't block the update
+                    numberOfRequestsToMake--;
+                    if(numberOfRequestsToMake == 0) {
+                        notifyOnWeatherUpdate();
+                    }
+
                 }
+            });
 
-                numberOfRequestsToMake--;
-                if (numberOfRequestsToMake == 0) {
-                    //all requests finished, so all cities on the map are updated
-                    //send broadcast to listeners about data being ready
-                    notifyOnWeatherUpdate();
-                }
-
-
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Log.d(LOG_TAG,"err : "+error.getLocalizedMessage());
-                Toast.makeText(WeatherService.this,
-                        "Error while getting weather", Toast.LENGTH_SHORT).show();
-
-                CityWeatherData cityWeatherData = new CityWeatherData();
-                //if there was a problem with getting weather for one city, set it as an empty
-                //CityWeatherData object (so that the user can see which city caused the problem
-                updateOneCityWeatherData(cityString, cityWeatherData, cityWeatherDataMap);
-
-                //broadcast about new weather data available will not be called,
-                //unless all requests are made (that is numberOfRequestsToMake reaches 0)
-                //if one request failed, we shouldn't block the update
-                numberOfRequestsToMake--;
-                if(numberOfRequestsToMake == 0) {
-                    notifyOnWeatherUpdate();
-                }
-
-            }
-        });
-
-        //add request to the RequestQueue
-        queue.add(stringRequest);
+            //add request to the RequestQueue
+            queue.add(stringRequest);
+        }
+        //There is no internet connectivity
+        else {
+            CityWeatherData autoData = new CityWeatherData(cityString, 0.0,0.0,null, "No data available due to lack of internet connection", new Date());
+            updateOneCityWeatherData(cityString, autoData, cityWeatherDataMap);
+            NotifyNoInternet();
+            Intent updateIntent = new Intent(NEW_WEATHER_EVENT);
+            LocalBroadcastManager.getInstance(this).sendBroadcast(updateIntent);
+        }
     }
 
     //updates weather data for all cities in @param cityWeatherDataMap
