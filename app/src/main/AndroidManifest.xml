@@ -15,7 +15,7 @@
 
         >
         <activity android:name=".MainActivity"
-            android:windowSoftInputMode="stateHidden"><!-- doesn't open the keyboard when activity is displayed-->
+            android:windowSoftInputMode="adjustPan"><!-- doesn't open the keyboard when activity is displayed-->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
