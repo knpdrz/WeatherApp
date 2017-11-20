@@ -7,4 +7,9 @@
     <string name="add">add</string>
     <string name="cityNamePlaceholder">city name</string>
     <string name="description">description</string>
+    <string name="noConnNotification">No internet, last checked at:</string>
+    <string name="noInternetToast">No internet connection, cannot refresh data</string>
+    <string name="notificationText">Last checked weather at:</string>
+    <string name="noInternetText">No data available due to lack of internet connection</string>
+    <string name="errorText">Error while getting weather</string>
 </resources>

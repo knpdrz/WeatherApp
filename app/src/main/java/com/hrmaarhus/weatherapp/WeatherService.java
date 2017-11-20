@@ -54,7 +54,7 @@ import static com.hrmaarhus.weatherapp.utils.Globals.WEATHER_CITY_EVENT;
 public class WeatherService extends IntentService {
     //creating a binder given to clients
     private final IBinder mBinder = new LocalBinder();
-    private ArrayList<String> _cityList;
+    private ArrayList<String> cityList;
     NotificationHelper notificationHelper;
 
     private String API_KEY = "b53c8005699265cde5eec630288d21dc";
@@ -77,17 +77,17 @@ public class WeatherService extends IntentService {
         super.onCreate();
         //creating local list of city names
         //and a map of weather data for these cities, stored as <city string, city weather> pairs
-        _cityList = new ArrayList<String>();
+        cityList = new ArrayList<String>();
 
         citiesWeatherMap = new HashMap<String, CityWeatherData>();
 
-        _cityList = getCityListFromDb();
-        //now _cityList contains a list of city strings (eg. 'Aarhus,dk')
+        cityList = getCityListFromDb();
+        //now cityList contains a list of city strings (eg. 'Aarhus,dk')
 
         //most service functions below use citiesWeatherMap,
         //so create the map with city strings as keys
-        createCitiesWeatherMap(_cityList, citiesWeatherMap);
-        Log.d(LOG_TAG, "WeatherService _citiesList contains "+_cityList.size() + " cities after on create");
+        createCitiesWeatherMap(cityList, citiesWeatherMap);
+        Log.d(LOG_TAG, "WeatherService _citiesList contains "+cityList.size() + " cities after on create");
 
     }
 
@@ -173,6 +173,7 @@ public class WeatherService extends IntentService {
             //saving changed list to db
             saveCityListToDb();
         }
+
     }
     //todo remove, for testing only
     public void clearDb(){
@@ -275,9 +276,10 @@ public class WeatherService extends IntentService {
             }, new Response.ErrorListener() {
                 @Override
                 public void onErrorResponse(VolleyError error) {
+                    String errorMsg = getString(R.string.errorText);
                     Log.d(LOG_TAG,"err : "+error.getLocalizedMessage());
                     Toast.makeText(WeatherService.this,
-                            "Error while getting weather", Toast.LENGTH_SHORT).show();
+                            errorMsg, Toast.LENGTH_SHORT).show();
 
                     CityWeatherData cityWeatherData = new CityWeatherData();
                     //if there was a problem with getting weather for one city, set it as an empty
@@ -300,7 +302,8 @@ public class WeatherService extends IntentService {
         }
         //There is no internet connectivity
         else {
-            CityWeatherData autoData = new CityWeatherData(cityString, 0.0,0.0,null, "No data available due to lack of internet connection", new Date());
+            String emptyWeatherDescriptionText = getString(R.string.noInternetText);
+            CityWeatherData autoData = new CityWeatherData(cityString, 0.0,0.0,null, emptyWeatherDescriptionText, new Date());
             updateOneCityWeatherData(cityString, autoData, cityWeatherDataMap);
             NotifyNoInternet();
             Intent updateIntent = new Intent(NEW_WEATHER_EVENT);
@@ -390,8 +393,9 @@ public class WeatherService extends IntentService {
         }
         else {
             NotifyNoInternet();
+            String noInternetToastText = getString(R.string.noInternetToast);
             Toast.makeText(WeatherService.this,
-                    "No internet connection, cannot refresh data", Toast.LENGTH_SHORT).show();
+                    noInternetToastText, Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -400,16 +404,21 @@ public class WeatherService extends IntentService {
         Date date = new Date();
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
         String currentdate = sdf.format(date);
+
+        String notificationText = getString(R.string.notificationText) + currentdate;
         notificationHelper.CreateNotification(getResources()
-                .getString(R.string.app_name),  "Last checked weather at: " + currentdate);
+                .getString(R.string.app_name),  notificationText);
     }
 
     private void NotifyNoInternet(){
         notificationHelper = new NotificationHelper(this);
         Date date = new Date();
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+
         String currentdate = sdf.format(date);
+        String notificationText = getString(R.string.noConnNotification) + currentdate;
+
         notificationHelper.CreateNotification(getResources()
-                .getString(R.string.app_name),  "No internet, last checked at: " + currentdate);
+                .getString(R.string.app_name),  notificationText);
     }
 }

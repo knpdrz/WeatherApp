@@ -49,7 +49,7 @@ import static com.hrmaarhus.weatherapp.utils.Globals.WEATHER_CITY_EVENT;
 public class MainActivity extends AppCompatActivity{
     Button refreshBtn;
 
-    WeatherService mWeatherService;
+    WeatherService weatherService;
     boolean mBound = false;
 
     private Button addCityBtn;
@@ -70,7 +70,7 @@ public class MainActivity extends AppCompatActivity{
         refreshBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                mWeatherService.requestAllCitiesWeatherUpdate();
+                weatherService.requestAllCitiesWeatherUpdate();
             }
         });
 
@@ -80,7 +80,7 @@ public class MainActivity extends AppCompatActivity{
             public void onClick(View view) {
                 String newCity = newCityEditText.getText().toString();
                 if(newCity != null && newCity != "") {
-                    mWeatherService.addCity(newCity);
+                    weatherService.addCity(newCity);
                     newCityEditText.setText("");
                 }
             }
@@ -121,7 +121,7 @@ public class MainActivity extends AppCompatActivity{
                 Log.d(LOG_TAG,"MainActivity: there is new weather data available");
 
                 ArrayList<CityWeatherData> cityWeatherDataArrayList =
-                        (ArrayList<CityWeatherData>)mWeatherService.getAllCitiesWeather();
+                        (ArrayList<CityWeatherData>)weatherService.getAllCitiesWeather();
                 updateCitiesWeatherListView(cityWeatherDataArrayList);
 
 
@@ -139,7 +139,7 @@ public class MainActivity extends AppCompatActivity{
             //casting the IBinder
             WeatherService.LocalBinder binder = (WeatherService.LocalBinder)iBinder;
             //getting WeatherService instance to call its public methods
-            mWeatherService = binder.getService();
+            weatherService = binder.getService();
 
             mBound = true;
         }
@@ -183,7 +183,7 @@ public class MainActivity extends AppCompatActivity{
                 String clickedCityString = citiesList.get(position).getCityName();
                 Log.d(LOG_TAG,"MainActivity: opening details activity for "+clickedCityString);
                 //get startup weather data for that activity
-                CityWeatherData cityWeatherData = mWeatherService.getCurrentWeather(clickedCityString);
+                CityWeatherData cityWeatherData = weatherService.getCurrentWeather(clickedCityString);
 
                 Intent openCityDetailsIntent =
                         new Intent(getApplicationContext(), CityDetailsActivity.class);
@@ -222,10 +222,10 @@ public class MainActivity extends AppCompatActivity{
                     //get the name of the city to be removed
                     String cityToBeRemoved = data.getStringExtra(CITY_NAME_TO_BE_REMOVED);
                     //remove city from the storage
-                    mWeatherService.removeCity(cityToBeRemoved);
+                    weatherService.removeCity(cityToBeRemoved);
                     //and update the list view
                     updateCitiesWeatherListView(
-                            (ArrayList<CityWeatherData>)mWeatherService.getAllCitiesWeather());
+                            (ArrayList<CityWeatherData>)weatherService.getAllCitiesWeather());
                 }
             }
         }
