@@ -47,18 +47,18 @@ import static com.hrmaarhus.weatherapp.utils.Globals.ONE_CITY_WEATHER_EXTRA;
 import static com.hrmaarhus.weatherapp.utils.Globals.WEATHER_CITY_EVENT;
 
 public class MainActivity extends AppCompatActivity{
-    Button refreshBtn;
+    private Button refreshBtn;
 
-    WeatherService weatherService;
+    private WeatherService weatherService;
     boolean mBound = false;
 
     private Button addCityBtn;
     private EditText newCityEditText;
 
-    CityAdapter adapter;
-    ListView listView;
+    private CityAdapter adapter;
+    private ListView listView;
 
-    ArrayList<CityWeatherData> citiesList;
+    private ArrayList<CityWeatherData> citiesList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -198,11 +198,9 @@ public class MainActivity extends AppCompatActivity{
     //update local citiesList with the list @param cityWeatherDataArrayList
     //and notify observers of adapter, so that list view refreshes
     private void updateCitiesWeatherListView(ArrayList<CityWeatherData> cityWeatherDataArrayList){
-        //todo check for identity?
         Log.d(LOG_TAG, "MainActivity list received in broadcast with " + cityWeatherDataArrayList.size() + " elements");
         citiesList = cityWeatherDataArrayList;
 
-        //todo not the best practice?
         adapter.setData(citiesList);
 
         adapter.notifyDataSetChanged();
@@ -222,6 +220,7 @@ public class MainActivity extends AppCompatActivity{
                     //get the name of the city to be removed
                     String cityToBeRemoved = data.getStringExtra(CITY_NAME_TO_BE_REMOVED);
                     //remove city from the storage
+
                     weatherService.removeCity(cityToBeRemoved);
                     //and update the list view
                     updateCitiesWeatherListView(

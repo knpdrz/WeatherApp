@@ -55,7 +55,7 @@ public class WeatherService extends IntentService {
     //creating a binder given to clients
     private final IBinder mBinder = new LocalBinder();
     private ArrayList<String> cityList;
-    NotificationHelper notificationHelper;
+    private NotificationHelper notificationHelper;
 
     private String API_KEY = "b53c8005699265cde5eec630288d21dc";
     private String URL = "http://api.openweathermap.org/data/2.5/weather?";
@@ -114,13 +114,12 @@ public class WeatherService extends IntentService {
         //when service is started, start checking weather periodically
         setUpWeatherChecker();
 
-        return super.onStartCommand(intent, flags, startId);
+        return START_STICKY;
     }
 
     //prepares and starts checker of the weather
     // weather will be checked every WEATHER_CHECK_DELAY milliseconds
     // weather will be checked for cities in citiesWeatherMap
-    //todo cities list check!
     private void setUpWeatherChecker(){
         final Handler handler = new Handler();
         handler.postDelayed(new Runnable() {
