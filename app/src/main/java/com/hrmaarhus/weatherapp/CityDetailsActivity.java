@@ -33,14 +33,14 @@ import static com.hrmaarhus.weatherapp.utils.Globals.ONE_CITY_WEATHER_EXTRA;
 
 public class CityDetailsActivity extends AppCompatActivity {
 
-    Button removeBtn, okBtn;
-    TextView cityNameTextView, humidityTextView, temperatureTextView, descriptionTextView;
+    private Button removeBtn, okBtn;
+    private TextView cityNameTextView, humidityTextView, temperatureTextView, descriptionTextView;
 
-    WeatherService mWeatherService;
-    boolean mBound = false;
+    private WeatherService mWeatherService;
+    private boolean mBound = false;
 
-    String cityName;
-    CityWeatherData cityWeatherData;
+    private String cityName;
+    private CityWeatherData cityWeatherData;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
