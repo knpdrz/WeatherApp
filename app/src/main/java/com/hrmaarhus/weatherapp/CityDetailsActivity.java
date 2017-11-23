@@ -79,7 +79,6 @@ public class CityDetailsActivity extends AppCompatActivity {
         Intent weatherIntent = new Intent(getApplicationContext(), WeatherService.class);
         bindService(weatherIntent, mConnection, Context.BIND_AUTO_CREATE);
 
-
         //creating local broadcast receiver
         //to be able to get data from the weather service
         //listen for 'new data available' broadcast
@@ -106,6 +105,7 @@ public class CityDetailsActivity extends AppCompatActivity {
         if(mConnection != null && mBound){
             Log.d(LOG_TAG, "CityDetailsActivity unbinding from the service");
             unbindService(mConnection);
+
         }
 
         //unregistering from broadcasts
@@ -129,7 +129,6 @@ public class CityDetailsActivity extends AppCompatActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
             //received local broadcast from weather service
-            Toast.makeText(context, "received broadcast!", Toast.LENGTH_SHORT).show();
             Log.d(LOG_TAG,"CityDetailsActivity: received broadcast from weather service ");
 
             if(intent.getAction().equals(NEW_WEATHER_EVENT)){

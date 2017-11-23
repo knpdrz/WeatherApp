@@ -12,6 +12,7 @@ import android.content.ServiceConnection;
 import android.os.Build;
 import android.os.Build.VERSION_CODES;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.RequiresApi;
 import android.support.v4.app.NotificationCompat;
@@ -59,11 +60,13 @@ public class MainActivity extends AppCompatActivity{
     private ListView listView;
 
     private ArrayList<CityWeatherData> citiesList;
+    private String cityNameToBeRemoved;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         newCityEditText = (EditText) findViewById(R.id.newCityText);
 
         refreshBtn = (Button)findViewById(R.id.refreshBtn);
@@ -92,7 +95,6 @@ public class MainActivity extends AppCompatActivity{
 
         bindService(weatherIntent, mConnection, Context.BIND_AUTO_CREATE);
 
-
         //creating local broadcast receiver
         //to be able to get data from the weather service
         //listen for 'new data available' broadcast
@@ -106,6 +108,7 @@ public class MainActivity extends AppCompatActivity{
 
         //setting up the list view of cities
         prepareListView();
+
     }
 
     //---------------------------------------------broadcast receiver
@@ -134,7 +137,6 @@ public class MainActivity extends AppCompatActivity{
     private ServiceConnection mConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
-            Log.d("MR","mainActivity onserviceconnected");
             //after binding to WeatherService
             //casting the IBinder
             WeatherService.LocalBinder binder = (WeatherService.LocalBinder)iBinder;
@@ -142,10 +144,16 @@ public class MainActivity extends AppCompatActivity{
             weatherService = binder.getService();
 
             mBound = true;
+
+            if(cityNameToBeRemoved != null){
+                doRemoveCity(cityNameToBeRemoved);
+                cityNameToBeRemoved = null;
+            }
         }
 
         @Override
             public void onServiceDisconnected(ComponentName componentName) {
+
             Log.d(LOG_TAG, "MainActivity: onServiceDisconnected");
             mBound = false;
         }
@@ -220,13 +228,24 @@ public class MainActivity extends AppCompatActivity{
                     //get the name of the city to be removed
                     String cityToBeRemoved = data.getStringExtra(CITY_NAME_TO_BE_REMOVED);
                     //remove city from the storage
+                    doRemoveCity(cityToBeRemoved);
 
-                    weatherService.removeCity(cityToBeRemoved);
-                    //and update the list view
-                    updateCitiesWeatherListView(
-                            (ArrayList<CityWeatherData>)weatherService.getAllCitiesWeather());
                 }
             }
         }
     }
+
+    private void doRemoveCity(final String cityToBeRemoved) {
+        if(weatherService !=null){
+            weatherService.removeCity(cityToBeRemoved);
+            //and update the list view
+            updateCitiesWeatherListView(
+                    (ArrayList<CityWeatherData>)weatherService.getAllCitiesWeather());
+
+        }else{
+            cityNameToBeRemoved = cityToBeRemoved;
+        }
+
+    }
+
 }

@@ -51,7 +51,7 @@ import static com.hrmaarhus.weatherapp.utils.Globals.ONE_CITY_WEATHER_EXTRA;
 import static com.hrmaarhus.weatherapp.utils.Globals.WEATHER_CHECK_DELAY;
 import static com.hrmaarhus.weatherapp.utils.Globals.WEATHER_CITY_EVENT;
 
-public class WeatherService extends IntentService {
+public class WeatherService extends Service {
     //creating a binder given to clients
     private final IBinder mBinder = new LocalBinder();
     private ArrayList<String> cityList;
@@ -66,11 +66,6 @@ public class WeatherService extends IntentService {
     private HashMap<String, CityWeatherData> citiesWeatherMap;
 
     private int numberOfRequestsToMake = 0;
-
-    public WeatherService(){
-        super("WeatherService");
-
-    }
 
     @Override
     public void onCreate() {
@@ -141,12 +136,6 @@ public class WeatherService extends IntentService {
         }, 0);
     }
 
-    //executed when an intent is received from a client
-    //which is binding to this service
-    @Override
-    protected void onHandleIntent(Intent intent) {
-    }
-
     //---------------------------------------------------------------database management
     //add new city to the local citiesWeatherMap
     //sending weather data request for that city
@@ -173,11 +162,6 @@ public class WeatherService extends IntentService {
             saveCityListToDb();
         }
 
-    }
-    //todo remove, for testing only
-    public void clearDb(){
-        citiesWeatherMap.clear();
-        saveCityListToDb();
     }
 
     //save citiesWeatherMap keys (city strings) to Db.
@@ -222,7 +206,6 @@ public class WeatherService extends IntentService {
     private void updateOneCityWeatherData(String cityString, CityWeatherData newCityWeatherData,
                                           HashMap<String, CityWeatherData> cityWeatherDataMap){
         if(cityWeatherDataMap.containsKey(cityString)){
-            //todo could add identity check newCityWeatherData!=prevCityWeatherData
             cityWeatherDataMap.remove(cityString);
             cityWeatherDataMap.put(newCityWeatherData.getCityName(), newCityWeatherData);
         }
@@ -319,7 +302,6 @@ public class WeatherService extends IntentService {
         // to the number of cities in the map
         // after response is received from the api, this var is decremented
         // when variable reaches 0, weather for all cities in the map has been updated
-        //todo could be done with an observer pattern (calling notifyOn... function)
         numberOfRequestsToMake = cityWeatherDataMap.size();
 
         String cityString;
@@ -353,7 +335,6 @@ public class WeatherService extends IntentService {
     private void notifyOnWeatherUpdate(){
         Log.d(LOG_TAG,"WeatherService: notifyOnWeatherUpdate() sending weather update broadcast AND a notification");
         //sets a notification
-        //todo commented this out
         Notify();
         //sends the broadcast
         Intent updateIntent = new Intent(NEW_WEATHER_EVENT);
